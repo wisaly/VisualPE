@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+﻿<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
 <Window sizebox="4,4,6,6" caption="0,0,0,30">
     <Font name="微软雅黑" size="19" bold="false" italic="false" />
     <VerticalLayout width="60" height="30" bkcolor="#FFFAFAFA">
