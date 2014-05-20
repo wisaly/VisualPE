@@ -1,7 +1,9 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes" ?>
-<Window sizebox="4,4,6,6" caption="0,0,0,30" >
+<Window sizebox="2,2,2,2" caption="0,0,0,30">
   <Font name="微软雅黑" size="19" bold="false" italic="false" />
-  <VerticalLayout width="60" height="30" bkcolor="#FFFAFAFA" inset="5,5,5,5">
+  <VerticalLayout width="60" height="30" bkcolor="#FFFAFAFA"
+                  bordersize="1" bordercolor="FF909090"
+                  inset="1,1,1,1">
     <!--caption-->
     <HorizontalLayout height="30" bkcolor="#FFF0F0F0">
       <Label text="Visual PE" float="true" pos="0,0,0,0" width="100" height="30" textcolor="#FF000000" disabledtextcolor="#FFA7A6AA" font="0" align="centerbottom" />
@@ -34,9 +36,13 @@
       <Button width="90" name="selectfile" text="Select File"/>
     </HorizontalLayout>
     <!--body-->
-    <HorizontalLayout inset="5,5,5,5">
+    <HorizontalLayout inset="5,5,5,5" childpadding="5">
       <Container bkcolor="FFAAAAAA"/>
-      <Progress hor="false" width="10" />
+      <Container width="10">
+        <Progress hor="false" width="10" value="30" 
+                bkimage="file='res\progressbk.png'"
+                foreimage="res\progressfore.png"/>
+      </Container>
     </HorizontalLayout>
   </VerticalLayout>
 </Window>
