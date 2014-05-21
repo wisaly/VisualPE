@@ -16,7 +16,7 @@ int APIENTRY _tWinMain(HINSTANCE hInstance,
  	CPaintManagerUI::SetInstance(hInstance);
 
     CMainWnd mainWnd;
-    mainWnd.Create(NULL, _T("DUIWnd"), UI_WNDSTYLE_FRAME, WS_EX_WINDOWEDGE);
+    mainWnd.Create(NULL, _T("VisualPE"), UI_WNDSTYLE_FRAME, WS_EX_WINDOWEDGE);
     mainWnd.CenterWindow();
     mainWnd.ShowModal();
     return 0;

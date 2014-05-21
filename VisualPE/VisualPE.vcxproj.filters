@@ -40,6 +40,12 @@
     <ClInclude Include="MainWnd.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="ScalableLayout.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="OpenFileDialog.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -49,6 +55,12 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="MainWnd.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="ScalableLayout.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="OpenFileDialog.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

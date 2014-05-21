@@ -36,3 +36,12 @@ using namespace DuiLib;
 # pragma comment(lib, "..\\..\\duilib\\lib\\Duilib.lib")
 # endif
 #endif
+
+namespace std
+{
+#ifdef _UNICODE
+#define tstring string
+#else
+#define tstring wstring
+#endif
+}

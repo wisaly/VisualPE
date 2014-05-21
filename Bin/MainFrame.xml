@@ -38,9 +38,11 @@
     <!--body-->
     <VerticalLayout inset="5,5,5,0" childpadding="5">
       <!--buttons-->
-      <HorizontalLayout height ="30">
-        <VerticalLayout />
-        <Button width="90" name="testbtn" text="Select File"
+      <HorizontalLayout height ="30" childpadding="5">
+        <VerticalLayout>
+          <Label name="filepath" valign="center" textcolor="FFAAAAAA"/>
+        </VerticalLayout>
+        <Button width="90" name="testbtn" text="TEST"
                 normalimage="file='res\button.png'"
                 hotimage="file='res\buttonhot.png'"
                 pushedimage="file='res\buttonpushed.png'"/>
@@ -50,7 +52,9 @@
                 pushedimage="file='res\buttonpushed.png'"/>
       </HorizontalLayout>
       <!--body-->
-      <Container name="container" bkcolor="FF55555555">
+      <Container name="container" bkcolor="FF55555555"
+                        mouse="true" mousechild="true"
+                        enabled="true">
         <Label text="Drag exe file here..." font="1" 
                align="center"
                textcolor="FFBBBBBB"/>
