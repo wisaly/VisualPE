@@ -1,5 +1,6 @@
 #pragma once
 #include <shellapi.h>
+#include "ScalableLayout.h"
 
 class CMainWnd :
 	public WindowImplBase
@@ -24,4 +25,5 @@ private:
 	CProgressUI *m_pScaleProgress;
 	CContainerUI *m_pContainer;
 	CLabelUI *m_pFilePath;
+	ScalableLayout m_view;
 };

@@ -1,11 +1,11 @@
 #include "StdAfx.h"
 #include "MainWnd.h"
 #include <time.h>
-#include <boost/scoped_ptr.hpp>
-#include <boost/algorithm/string.hpp>
+#include <boost/scoped_array.hpp>
 #include "OpenFileDialog.h"
 
 CMainWnd::CMainWnd(void)
+	:m_view(m_pContainer)
 {
 }
 
@@ -56,27 +56,8 @@ void CMainWnd::OnClick( TNotifyUI& msg )
 	}
 	else if (msg.pSender == m_pTestbtn)
 	{
-		CContainerUI * n = rand()%2 ? (CContainerUI *)(new CHorizontalLayoutUI) : (CContainerUI *)(new CVerticalLayoutUI);
-		n->SetBorderSize(1);
-		RECT r={10,10,10,10};
-		n->SetInset(r);
-		n->SetBkColor(RGB(rand()%255,rand()%255,rand()%255)|0xFF000000);
-		n->SetMouseEnabled();
-		
-
-		CContainerUI *p = m_pContainer;
-		int i;
-		while ((i=rand() % (p->GetCount()+1)) != p->GetCount())
-		{
-			p = static_cast<CContainerUI*>(p->GetItemAt(i));
-			
-			if (rand()%2)
-			{
-				break;
-			}
-		}
-
-		p->Add(n);
+		m_view.TestLayout();
+		m_view.ShowLayout();
 	}
 }
 
@@ -102,7 +83,7 @@ void CMainWnd::OnDropFiles( HDROP hDrop )
 		wPathnameSize = DragQueryFile(hDrop, 0, NULL, 0);  
 		wPathnameSize++;
 
-		boost::scoped_ptr<TCHAR> pFilePathName(
+		boost::scoped_array<TCHAR> pFilePathName(
 			new TCHAR[wPathnameSize]);
 		if (NULL == pFilePathName)  
 		{  
