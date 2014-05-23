@@ -1,34 +1,27 @@
 #pragma once
+#include "ScalableNode.h"
 
-class ScalableNode
+class CScalableLayout
 {
 public:
-	ScalableNode();
-	typedef boost::shared_ptr<ScalableNode> Ptr;
-	typedef vector<Ptr>::iterator Iter;
+	CScalableLayout(
+		CContainerUI *&pContainer,
+		CProgressUI *&pProgress,
+		CHorizontalLayoutUI *&pStatusBar);
+	~CScalableLayout(void);
 
-	int level_;
-	bool isHor_;
-	CDuiString name_;
-	CDuiString text_;
-	CDuiString tescription_;
-	COLORREF bkColor_;
-	vector<Ptr> children_;
+	void SetContent(CScalableNode::Ptr pRoot,int nMaxLevel);
+	void ZoomIn(CDuiString sNodeName = _T(""));
+	void ZoomOut();
 
-	static Ptr FindChild(Ptr node,CDuiString name);
-};
-
-class ScalableLayout
-{
-public:
-	ScalableLayout(CContainerUI *&pContainer);
-	~ScalableLayout(void);
-
-	void ShowLayout(CDuiString rootName = _T(""));
 	void TestLayout();
 private:
-	CContainerUI *CreateLayout(ScalableNode::Ptr node,int level);
+	CContainerUI *CreateLayout(CScalableNode::Ptr pNode,int nLevel);
 private:
 	CContainerUI *&m_pContainer;
-	ScalableNode::Ptr m_rootNode;
+	CProgressUI *&m_pProgress;
+	CHorizontalLayoutUI *&m_pStatusBar;
+	CScalableNode::Ptr m_pRootNode;
+	CScalableNode::Ptr m_pCurrentNode;
+	int m_nMaxLevel;
 };

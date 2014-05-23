@@ -1,4 +1,4 @@
 VisualPE
 ========
 
-PE file viewer, for learning duilib
+PE file viewer, for learning duilib and pe structure

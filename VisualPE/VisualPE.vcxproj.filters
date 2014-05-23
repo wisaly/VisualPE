@@ -46,6 +46,9 @@
     <ClInclude Include="OpenFileDialog.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="ScalableNode.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -61,6 +64,9 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="OpenFileDialog.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="ScalableNode.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

@@ -46,10 +46,10 @@
                 normalimage="file='res\button.png'"
                 hotimage="file='res\buttonhot.png'"
                 pushedimage="file='res\buttonpushed.png'"/>
-        <Button width="90" name="selectfile" text="Select File"
-                normalimage="file='res\button.png'"
-                hotimage="file='res\buttonhot.png'"
-                pushedimage="file='res\buttonpushed.png'"/>
+        <Button width="30" name="selectfile" tooltip="Select File"
+                normalimage="file='res\selectfile.png'"
+                hotimage="file='res\selectfilehot.png'"
+                pushedimage="file='res\selectfilepushed.png'"/>
       </HorizontalLayout>
       <!--body-->
       <Container name="container" bkcolor="FF55555555"
@@ -59,9 +59,15 @@
                align="center"
                textcolor="FFBBBBBB"/>
       </Container>
-      <Progress name="scaleprogress" value="30" visible="false"
-              bkimage="file='res\progressbk.png'"
-              foreimage="res\progressfore.png"/>
+      <HorizontalLayout height="10" name="statusbar" visible="false">
+        <Progress name="scaleprogress" value="30"
+                bkimage="file='res\progressbk.png'"
+                foreimage="res\progressfore.png"/>
+        <Button width="10" name="zoomout" tooltip="Zoom Out"
+                normalimage="file='res\zoomout.png'"
+                hotimage="file='res\zoomouthot.png'"
+                pushedimage="file='res\zoomoutpushed.png'"/>
+      </HorizontalLayout>
     </VerticalLayout>
   </VerticalLayout>
 </Window>

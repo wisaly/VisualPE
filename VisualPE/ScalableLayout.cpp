@@ -1,127 +1,111 @@
 #include "StdAfx.h"
 #include "ScalableLayout.h"
 
-ScalableNode::ScalableNode()
-{
-
-}
-
-ScalableNode::Ptr ScalableNode::FindChild( Ptr node,CDuiString name )
-{
-	if (node->name_ == name)
-	{
-		return node;
-	}
-
-	for (ScalableNode::Iter i = node->children_.begin();
-		i != node->children_.end();
-		i++)
-	{
-		Ptr ret = FindChild(*i,name);
-		if (ret)
-		{
-			return ret;
-		}
-	}
-
-	return Ptr();
-}
-ScalableLayout::ScalableLayout(CContainerUI *&pContainer)
-	:m_pContainer(pContainer)
+CScalableLayout::CScalableLayout(CContainerUI *&pContainer,CProgressUI *&pProgress,CHorizontalLayoutUI *&pStatusBar)
+	:m_pContainer(pContainer),m_pProgress(pProgress),m_pStatusBar(pStatusBar)
 {
 }
 
 
-ScalableLayout::~ScalableLayout(void)
+CScalableLayout::~CScalableLayout(void)
 {
 }
 
-CContainerUI * ScalableLayout::CreateLayout( ScalableNode::Ptr node,int level )
+CContainerUI * CScalableLayout::CreateLayout( CScalableNode::Ptr pNode,int nLevel )
 {
-	CContainerUI *layout = node->isHor_ ?
+	CContainerUI *pLayout = pNode->bHor ?
 		static_cast<CContainerUI*>(new CHorizontalLayoutUI) : 
 		static_cast<CContainerUI*>(new CVerticalLayoutUI);
 
-	layout->SetBkColor(node->bkColor_);
-	RECT r={10,10,10,10};
-	layout->SetInset(r);
+	RECT rcInset={10,10,10,10};
+	pLayout->SetInset(rcInset);
+	pLayout->SetBkColor(pNode->crBk | 0xFF000000);
 
-	for (ScalableNode::Iter i = node->children_.begin();
-		i != node->children_.end();
+	for (CScalableNode::Iter i = pNode->ChildBegin();
+		i != pNode->ChildEnd();
 		i++)
 	{
-		bool isLeaf = true;
-		for (ScalableNode::Iter j = (*i)->children_.begin();
-			j != (*i)->children_.end();
+		bool bLeaf = true;
+		for (CScalableNode::Iter j = (*i)->ChildBegin();
+			j != (*i)->ChildEnd();
 			j++)
 		{
-			if ((*j)->level_ == level)
+			if ((*j)->nLevel == nLevel)
 			{
-				isLeaf = false;
+				bLeaf = false;
 				break;
 			}
 		}
-		if (isLeaf)
+		if (bLeaf)
 		{
-			CContainerUI *itemContainer = new CContainerUI;
-			CButtonUI *item = new CButtonUI;
-			item->SetName((*i)->name_);
-			item->SetBkColor((*i)->bkColor_);
-			item->SetText((*i)->text_);
-			itemContainer->Add(item);
+			CContainerUI *pItemContainer = new CContainerUI;
+			CButtonUI *pItem = new CButtonUI;
+			pItem->SetName((*i)->sName);
+			pItem->SetBkColor((*i)->crBk | 0xFF000000);
+			pItem->SetText((*i)->sText);
+			pItemContainer->Add(pItem);
 
-			layout->Add(itemContainer);
+			pLayout->Add(pItemContainer);
 		}
 		else
 		{
-			layout->Add(CreateLayout(*i,level));
+			pLayout->Add(CreateLayout(*i,nLevel));
 		}
 	}
 
-	return layout;
+	return pLayout;
 }
 
-void ScalableLayout::ShowLayout( CDuiString rootName )
+void CScalableLayout::ZoomIn( CDuiString sNodeName )
 {
-	m_pContainer->RemoveAll();
+	CScalableNode::Ptr pNode = m_pRootNode->FindChild(sNodeName);
 
-	ScalableNode::Ptr node = ScalableNode::FindChild(m_rootNode,rootName);
-	m_pContainer->Add(CreateLayout(node,node->level_ + 1));
+	if (pNode)
+	{
+		m_pCurrentNode = pNode;
+		m_pContainer->RemoveAll();
+		m_pContainer->Add(CreateLayout(pNode,pNode->nLevel + 1));
+
+		m_pStatusBar->SetVisible(pNode->nLevel > 0);
+		m_pProgress->SetValue(m_nMaxLevel - pNode->nLevel + 1);
+	}
 }
 
-#define RANDCOLOR (RGB(rand()%255,rand()%255,rand()%255)|0xFF000000)
-void ScalableLayout::TestLayout()
+void CScalableLayout::ZoomOut()
 {
-	m_rootNode = ScalableNode::Ptr(new ScalableNode);
-	m_rootNode->level_ = 0;
-	m_rootNode->isHor_ = true;
-	m_rootNode->bkColor_ = RANDCOLOR;
+	if (m_pCurrentNode && m_pCurrentNode->GetParent())
+	{
+		ZoomIn(m_pCurrentNode->GetParent()->sName);
+	}
+}
 
-	ScalableNode::Ptr pChild1 = ScalableNode::Ptr(new ScalableNode);
-	pChild1->level_ = 1;
-	pChild1->name_ = _T("child1");
-	pChild1->text_ = _T("child 1");
-	pChild1->bkColor_ = RANDCOLOR;
-	m_rootNode->children_.push_back(pChild1);
-
-	ScalableNode::Ptr pChild2 = ScalableNode::Ptr(new ScalableNode);
-	pChild2->level_ = 1;
-	pChild2->isHor_ = false;
-	pChild2->bkColor_ = RANDCOLOR;
-	m_rootNode->children_.push_back(pChild2);
-
-	ScalableNode::Ptr pGchild1 = ScalableNode::Ptr(new ScalableNode);
-	pGchild1->level_ = 1;
-	pGchild1->name_ = _T("pGchild1");
-	pGchild1->text_ = _T("grand child 1");
-	pGchild1->bkColor_ = RANDCOLOR;
-	pChild2->children_.push_back(pGchild1);
+#define RANDCOLOR (RGB(rand()%255,rand()%255,rand()%255))
+void CScalableLayout::TestLayout()
+{
+	CScalableNode::Ptr pRoot = 
+		CScalableNode::New(0,true,RANDCOLOR)
+			<< (CScalableNode::New(1,true,RANDCOLOR,_T("child1"),_T("child 1"))
+			+ (CScalableNode::New(1,false,RANDCOLOR)
+				<<(CScalableNode::New(1,true,RANDCOLOR,_T("pGchild1"),_T("grand child 1"))
+				+ (CScalableNode::New(1,true,RANDCOLOR,_T("pGchild2"),_T("grand child 2"))
+					<<(CScalableNode::New(2,true,RANDCOLOR,_T("ggchild1"),_T("grand grand child 1"))
+					+ CScalableNode::New(2,true,RANDCOLOR,_T("ggchild2"),_T("grand grand child 2"))
+					))
+				))
+			);
 
 
-	ScalableNode::Ptr pGchild2 = ScalableNode::Ptr(new ScalableNode);
-	pGchild2->level_ = 1;
-	pGchild2->name_ = _T("pGchild2");
-	pGchild2->text_ = _T("grand child 2");
-	pGchild2->bkColor_ = RANDCOLOR;
-	pChild2->children_.push_back(pGchild2);
+	SetContent(pRoot,2);
+}
+
+void CScalableLayout::SetContent( CScalableNode::Ptr pRoot,int nMaxLevel )
+{
+	m_pRootNode = pRoot;
+	m_pCurrentNode = pRoot;
+	m_nMaxLevel = nMaxLevel;
+
+	m_pProgress->SetMinValue(0);
+	m_pProgress->SetMaxValue(m_nMaxLevel + 1);
+
+	ZoomIn(m_pRootNode->sName);
 }
