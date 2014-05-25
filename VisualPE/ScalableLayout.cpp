@@ -58,17 +58,23 @@ CContainerUI * CScalableLayout::CreateLayout( CScalableNode::Ptr pNode,int nLeve
 
 void CScalableLayout::ZoomIn( CDuiString sNodeName )
 {
+	if (!m_pRootNode)
+	{
+		return;
+	}
 	CScalableNode::Ptr pNode = m_pRootNode->FindChild(sNodeName);
 
-	if (pNode)
+	if (!pNode)
 	{
-		m_pCurrentNode = pNode;
-		m_pContainer->RemoveAll();
-		m_pContainer->Add(CreateLayout(pNode,pNode->nLevel + 1));
-
-		m_pStatusBar->SetVisible(pNode->nLevel > 0);
-		m_pProgress->SetValue(m_nMaxLevel - pNode->nLevel + 1);
+		return;
 	}
+
+	m_pCurrentNode = pNode;
+	m_pContainer->RemoveAll();
+	m_pContainer->Add(CreateLayout(pNode,pNode->nLevel + 1));
+
+	m_pStatusBar->SetVisible(pNode->nLevel > 0);
+	m_pProgress->SetValue(m_nMaxLevel - pNode->nLevel + 1);
 }
 
 void CScalableLayout::ZoomOut()
