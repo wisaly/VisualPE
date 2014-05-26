@@ -1,9 +1,0 @@
-﻿<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
-<Window sizebox="4,4,6,6" caption="0,0,0,30">
-    <Font name="微软雅黑" size="19" bold="false" italic="false" />
-    <VerticalLayout width="60" height="30" bkcolor="#FFFAFAFA">
-        <HorizontalLayout height="30">
-            <Label text="Visual PE" float="true" pos="0,0,0,0" width="100" height="30" textcolor="#FF000000" disabledtextcolor="#FFA7A6AA" font="0" align="centerbottom" />
-        </HorizontalLayout>
-    </VerticalLayout>
-</Window>

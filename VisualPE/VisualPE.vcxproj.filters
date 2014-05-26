@@ -22,7 +22,8 @@
     <None Include="VisualPE.ico">
       <Filter>资源文件</Filter>
     </None>
-    <None Include="MainFrame.xml" />
+    <None Include="..\Bin\res\scalablelayout.xml" />
+    <None Include="..\Bin\res\MainFrame.xml" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h">
@@ -49,6 +50,12 @@
     <ClInclude Include="ScalableNode.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="PEFile.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="PEStructBuilder.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -67,6 +74,12 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="ScalableNode.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="PEFile.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="PEStructBuilder.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

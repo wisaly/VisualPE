@@ -1,11 +1,28 @@
 #include "StdAfx.h"
 #include "ScalableLayout.h"
 
-CScalableLayout::CScalableLayout(CContainerUI *&pContainer,CProgressUI *&pProgress,CHorizontalLayoutUI *&pStatusBar)
-	:m_pContainer(pContainer),m_pProgress(pProgress),m_pStatusBar(pStatusBar)
+CScalableLayout::CScalableLayout(HWND hParentWnd)
+	:m_pContainer(0),m_pProgress(0),m_pStatusBar(0),
+	m_hParentWnd(hParentWnd)
 {
+	CDialogBuilder builder;
+	CContainerUI *pUI = static_cast<CContainerUI*>(builder.Create(
+		_T("scalablelayout.xml")));
+
+	this->Add(pUI);
+
+	m_pStatusBar = static_cast<CHorizontalLayoutUI*>(FindSubControl(_T("statusbar")));
+	m_pProgress = static_cast<CProgressUI*>(FindSubControl(_T("scaleprogress")));
+	m_pZoomout = static_cast<CButtonUI*>(FindSubControl(_T("zoomout")));
+	m_pContainer = static_cast<CContainerUI*>(FindSubControl(_T("container")));
+
 }
 
+void CScalableLayout::DoInit()
+{
+	GetManager()->AddNotifier(this);
+	GetManager()->AddMessageFilter(this);
+}
 
 CScalableLayout::~CScalableLayout(void)
 {
@@ -17,7 +34,7 @@ CContainerUI * CScalableLayout::CreateLayout( CScalableNode::Ptr pNode,int nLeve
 		static_cast<CContainerUI*>(new CHorizontalLayoutUI) : 
 		static_cast<CContainerUI*>(new CVerticalLayoutUI);
 
-	RECT rcInset={10,10,10,10};
+	RECT rcInset={5,5,5,0};
 	pLayout->SetInset(rcInset);
 	pLayout->SetBkColor(pNode->crBk | 0xFF000000);
 
@@ -42,7 +59,14 @@ CContainerUI * CScalableLayout::CreateLayout( CScalableNode::Ptr pNode,int nLeve
 			CButtonUI *pItem = new CButtonUI;
 			pItem->SetName((*i)->sName);
 			pItem->SetBkColor((*i)->crBk | 0xFF000000);
-			pItem->SetText((*i)->sText);
+			pItem->SetShowHtml();
+			pItem->SetTextStyle(DT_CENTER|DT_VCENTER);
+			
+			CDuiString sText;
+			sText.Format(_T("{p}%s{n}{n}{c #FFCCCCCC}%s{/c}{/p}")
+				,(LPCTSTR)(*i)->sText,(LPCTSTR)(*i)->sDescription);
+			pItem->SetText(sText);
+			
 			pItemContainer->Add(pItem);
 
 			pLayout->Add(pItemContainer);
@@ -53,7 +77,18 @@ CContainerUI * CScalableLayout::CreateLayout( CScalableNode::Ptr pNode,int nLeve
 		}
 	}
 
-	return pLayout;
+	CVerticalLayoutUI *pWrapper = new CVerticalLayoutUI;
+	pWrapper->Add(pLayout);
+	
+	CLabelUI *pDescription = new CLabelUI;
+	pDescription->SetFixedHeight(20);
+	pDescription->SetText(pNode->sDescription);
+	pDescription->SetTextStyle(DT_CENTER);
+	pDescription->SetBkColor(pNode->crBk | 0xFF000000);
+
+	pWrapper->Add(pDescription);
+
+	return pWrapper;
 }
 
 void CScalableLayout::ZoomIn( CDuiString sNodeName )
@@ -85,17 +120,18 @@ void CScalableLayout::ZoomOut()
 	}
 }
 
-#define RANDCOLOR (RGB(rand()%255,rand()%255,rand()%255))
+#define RandColor() RGB(rand(),rand(),rand())
+
 void CScalableLayout::TestLayout()
 {
 	CScalableNode::Ptr pRoot = 
-		CScalableNode::New(0,true,RANDCOLOR)
-			<< (CScalableNode::New(1,true,RANDCOLOR,_T("child1"),_T("child 1"))
-			+ (CScalableNode::New(1,false,RANDCOLOR)
-				<<(CScalableNode::New(1,true,RANDCOLOR,_T("pGchild1"),_T("grand child 1"))
-				+ (CScalableNode::New(1,true,RANDCOLOR,_T("pGchild2"),_T("grand child 2"))
-					<<(CScalableNode::New(2,true,RANDCOLOR,_T("ggchild1"),_T("grand grand child 1"))
-					+ CScalableNode::New(2,true,RANDCOLOR,_T("ggchild2"),_T("grand grand child 2"))
+		CScalableNode::New(0,true,RandColor(),_T(""),_T(""),_T("root"))
+			<< (CScalableNode::New(1,true,RandColor(),_T("child1"),_T("child 1"),_T("description child 1"))
+			+ (CScalableNode::New(1,false,RandColor(),_T(""),_T(""),_T("child 2"))
+				<<(CScalableNode::New(1,true,RandColor(),_T("pGchild1"),_T("grand child 1"),_T("description grand child 1"))
+				+ (CScalableNode::New(1,true,RandColor(),_T("pGchild2"),_T("grand child 2"),_T("description grand child 2"))
+					<<(CScalableNode::New(2,true,RandColor(),_T("ggchild1"),_T("grand grand child 1"),_T("description grand grand child 1"))
+					+ CScalableNode::New(2,true,RandColor(),_T("ggchild2"),_T("grand grand child 2"),_T("description grand grand child 2"))
 					))
 				))
 			);
@@ -114,4 +150,68 @@ void CScalableLayout::SetContent( CScalableNode::Ptr pRoot,int nMaxLevel )
 	m_pProgress->SetMaxValue(m_nMaxLevel + 1);
 
 	ZoomIn(m_pRootNode->sName);
+}
+
+void CScalableLayout::Notify( TNotifyUI& msg )
+{
+	if (msg.sType == _T("click"))
+	{
+		if (msg.pSender == m_pZoomout)
+		{
+			ZoomOut();
+		}
+		else
+		{
+			ZoomIn(msg.pSender->GetName());
+		}
+	}
+}
+
+LRESULT CScalableLayout::MessageHandler( UINT uMsg, WPARAM wParam, LPARAM lParam, bool& bHandled )
+{
+	if (uMsg == WM_MOUSEWHEEL)
+	{
+		WORD fwKeys = LOWORD(wParam);    // key flags
+		if (fwKeys != 0)
+		{
+			return 0;
+		}
+
+		short zDelta = (short) HIWORD(wParam);    // wheel rotation
+
+		POINT pt;
+		pt.x = (short) LOWORD(lParam);    // horizontal position of pointer
+		pt.y = (short) HIWORD(lParam);    // vertical position of pointer
+
+		::ScreenToClient(m_hParentWnd,&pt);
+
+		if (zDelta > 0)
+		{
+			// zoom in
+			CControlUI *pHit = GetManager()->FindControl(pt);
+
+			CButtonUI *pHitButton = dynamic_cast<CButtonUI*>(pHit);
+			if (pHitButton == 0)
+			{
+				return 0;
+			}
+
+			ZoomIn(pHitButton->GetName());
+		}
+		else
+		{
+			RECT rc = m_pContainer->GetPos();
+			if (!::PtInRect(&rc,pt))
+			{
+				return 0;
+			}
+
+			ZoomOut();
+		}
+
+		bHandled = TRUE;
+		return 0;
+	}
+
+	return 0;
 }

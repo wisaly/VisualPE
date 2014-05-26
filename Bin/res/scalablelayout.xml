@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Window>
+  <VerticalLayout>
+    <Container name="container" bkcolor="FF55555555"
+                          mouse="true" mousechild="true"
+                          enabled="true">
+      <Label text="Drag exe or dll file here..." font="1"
+             align="center"
+             textcolor="FFBBBBBB"/>
+    </Container>
+    <HorizontalLayout height="10" name="statusbar" visible="false">
+      <Progress name="scaleprogress" value="30"
+              bkimage="file='progressbk.png'"
+              foreimage="progressfore.png"/>
+      <Button width="10" name="zoomout" tooltip="Zoom Out"
+              normalimage="file='zoomout.png'"
+              hotimage="file='zoomouthot.png'"
+              pushedimage="file='zoomoutpushed.png'"/>
+    </HorizontalLayout>
+  </VerticalLayout>
+</Window>

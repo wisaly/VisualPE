@@ -56,5 +56,6 @@ using namespace std;
 #include <boost/scoped_ptr.hpp>
 #include <boost/scoped_array.hpp>
 #include <boost/weak_ptr.hpp>
-#include <boost\noncopyable.hpp>
+#include <boost/noncopyable.hpp>
+#include <boost/random.hpp>
 using namespace boost;

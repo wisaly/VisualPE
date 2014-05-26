@@ -98,7 +98,8 @@ copy %%i %%j
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <None Include="MainFrame.xml" />
+    <None Include="..\Bin\res\MainFrame.xml" />
+    <None Include="..\Bin\res\scalablelayout.xml" />
     <None Include="ReadMe.txt" />
     <None Include="small.ico" />
     <None Include="VisualPE.ico" />
@@ -106,6 +107,8 @@ copy %%i %%j
   <ItemGroup>
     <ClInclude Include="MainWnd.h" />
     <ClInclude Include="OpenFileDialog.h" />
+    <ClInclude Include="PEFile.h" />
+    <ClInclude Include="PEStructBuilder.h" />
     <ClInclude Include="Resource.h" />
     <ClInclude Include="ScalableLayout.h" />
     <ClInclude Include="ScalableNode.h" />
@@ -116,6 +119,8 @@ copy %%i %%j
   <ItemGroup>
     <ClCompile Include="MainWnd.cpp" />
     <ClCompile Include="OpenFileDialog.cpp" />
+    <ClCompile Include="PEFile.cpp" />
+    <ClCompile Include="PEStructBuilder.cpp" />
     <ClCompile Include="ScalableLayout.cpp" />
     <ClCompile Include="ScalableNode.cpp" />
     <ClCompile Include="stdafx.cpp">

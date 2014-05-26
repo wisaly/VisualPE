@@ -4,6 +4,7 @@
 #include "stdafx.h"
 #include "VisualPE.h"
 #include "MainWnd.h"
+#include <time.h>
 
 int APIENTRY _tWinMain(HINSTANCE hInstance,
                      HINSTANCE hPrevInstance,
@@ -12,6 +13,8 @@ int APIENTRY _tWinMain(HINSTANCE hInstance,
 {
 	UNREFERENCED_PARAMETER(hPrevInstance);
 	UNREFERENCED_PARAMETER(lpCmdLine);
+
+	srand((unsigned)time(NULL));
 
  	CPaintManagerUI::SetInstance(hInstance);
 
