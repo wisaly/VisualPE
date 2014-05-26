@@ -11,7 +11,7 @@ CScalableNode::~CScalableNode(void)
 {
 }
 
-CScalableNode::Ptr CScalableNode::New( int nLevel /*= 0*/, bool bHor /*= true*/, COLORREF crBk /*= 0*/, CDuiString sName /*= _T("")*/, CDuiString sText /*= _T("")*/, CDuiString sDescription /*= _T("")*/ )
+CScalableNode::Ptr CScalableNode::New( int nLevel /*= 0*/, bool bHor /*= true*/, COLORREF crBk /*= 0*/, CDuiString sDescription /*= _T("")*/, DWORD dwSize /*= 0*/, CDuiString sName /*= _T("")*/, CDuiString sText /*= _T("")*/ )
 {
 	Ptr pNew = Ptr(new CScalableNode);
 	pNew->m_pThis = pNew;
@@ -21,6 +21,7 @@ CScalableNode::Ptr CScalableNode::New( int nLevel /*= 0*/, bool bHor /*= true*/,
 	pNew->sName = sName;
 	pNew->sText = sText;
 	pNew->sDescription = sDescription;
+	pNew->dwSize = dwSize;
 
 	return pNew;
 }
@@ -66,6 +67,24 @@ CScalableNode::Ptr CScalableNode::FindChild( CDuiString sName )
 	return Ptr();
 }
 
+CDuiString CScalableNode::SizeString()
+{
+	CDuiString sResult;
+	if (dwSize > (2 << 20))
+	{
+		sResult.Format(_T("%d MB"),dwSize);
+	}
+	else if (dwSize > (2 << 10))
+	{
+		sResult.Format(_T("%d KB"),dwSize);
+	}
+	else
+	{
+		sResult.Format(_T("%d bytes"),dwSize);
+	}
+
+	return sResult;
+}
 CScalableNode::ListPtr operator+( CScalableNode::Ptr pLeft,CScalableNode::Ptr pRight )
 {
 	CScalableNode::ListPtr pList(new CScalableNode::List);

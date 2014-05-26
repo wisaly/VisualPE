@@ -1,14 +1,17 @@
 #pragma once
+#include "SizedPointer.h"
 class CPEFile
 {
 public:
 	CPEFile(void);
 	~CPEFile(void);
 
-	IMAGE_DOS_HEADER DOSHeader;
-	BYTE *DOSStub;
-	IMAGE_NT_HEADERS32 NTHeader;
-	IMAGE_SECTION_HEADER SectionHeader;
+	CSizedPointer<BYTE> pFileBuf;
+
+	CSizedPointer<IMAGE_DOS_HEADER> pDosHeader;
+	CSizedPointer<BYTE> pDosStub;
+	CSizedPointer<IMAGE_NT_HEADERS32> pNtHeader;
+	CSizedPointer<IMAGE_SECTION_HEADER> pSectionHeader;
 
 	bool LoadFile(CDuiString sFilePath);
 };

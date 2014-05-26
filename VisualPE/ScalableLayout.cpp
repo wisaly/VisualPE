@@ -1,6 +1,8 @@
 #include "StdAfx.h"
 #include "ScalableLayout.h"
 
+#define COLOR(cr) (cr | 0xFF000000)
+
 CScalableLayout::CScalableLayout(HWND hParentWnd)
 	:m_pContainer(0),m_pProgress(0),m_pStatusBar(0),
 	m_hParentWnd(hParentWnd)
@@ -34,9 +36,7 @@ CContainerUI * CScalableLayout::CreateLayout( CScalableNode::Ptr pNode,int nLeve
 		static_cast<CContainerUI*>(new CHorizontalLayoutUI) : 
 		static_cast<CContainerUI*>(new CVerticalLayoutUI);
 
-	RECT rcInset={5,5,5,0};
-	pLayout->SetInset(rcInset);
-	pLayout->SetBkColor(pNode->crBk | 0xFF000000);
+	pLayout->SetBkColor(COLOR(pNode->crBk));
 
 	for (CScalableNode::Iter i = pNode->ChildBegin();
 		i != pNode->ChildEnd();
@@ -58,7 +58,7 @@ CContainerUI * CScalableLayout::CreateLayout( CScalableNode::Ptr pNode,int nLeve
 			CContainerUI *pItemContainer = new CContainerUI;
 			CButtonUI *pItem = new CButtonUI;
 			pItem->SetName((*i)->sName);
-			pItem->SetBkColor((*i)->crBk | 0xFF000000);
+			pItem->SetBkColor(COLOR((*i)->crBk));
 			pItem->SetShowHtml();
 			pItem->SetTextStyle(DT_CENTER|DT_VCENTER);
 			
@@ -77,18 +77,30 @@ CContainerUI * CScalableLayout::CreateLayout( CScalableNode::Ptr pNode,int nLeve
 		}
 	}
 
-	CVerticalLayoutUI *pWrapper = new CVerticalLayoutUI;
-	pWrapper->Add(pLayout);
-	
-	CLabelUI *pDescription = new CLabelUI;
-	pDescription->SetFixedHeight(20);
-	pDescription->SetText(pNode->sDescription);
-	pDescription->SetTextStyle(DT_CENTER);
-	pDescription->SetBkColor(pNode->crBk | 0xFF000000);
 
-	pWrapper->Add(pDescription);
+	if (!pNode->sDescription.IsEmpty())
+	{
+		CVerticalLayoutUI *pWrapper = new CVerticalLayoutUI;
+		pWrapper->Add(pLayout);
 
-	return pWrapper;
+		pLayout->SetInset(CDuiRect(5,5,5,0));
+
+		CLabelUI *pDescription = new CLabelUI;
+		pDescription->SetFixedHeight(20);
+		pDescription->SetTextStyle(DT_CENTER);
+		pDescription->SetBkColor(COLOR(pNode->crBk));
+
+		CDuiString sDescription;
+		sDescription.Format(_T("%s (%s)"),
+			(LPCTSTR)pNode->sDescription,
+			(LPCTSTR)pNode->SizeString());
+		pDescription->SetText(sDescription);
+		pWrapper->Add(pDescription);
+
+		return pWrapper;
+	}
+
+	return pLayout;
 }
 
 void CScalableLayout::ZoomIn( CDuiString sNodeName )
@@ -124,20 +136,20 @@ void CScalableLayout::ZoomOut()
 
 void CScalableLayout::TestLayout()
 {
-	CScalableNode::Ptr pRoot = 
-		CScalableNode::New(0,true,RandColor(),_T(""),_T(""),_T("root"))
-			<< (CScalableNode::New(1,true,RandColor(),_T("child1"),_T("child 1"),_T("description child 1"))
-			+ (CScalableNode::New(1,false,RandColor(),_T(""),_T(""),_T("child 2"))
-				<<(CScalableNode::New(1,true,RandColor(),_T("pGchild1"),_T("grand child 1"),_T("description grand child 1"))
-				+ (CScalableNode::New(1,true,RandColor(),_T("pGchild2"),_T("grand child 2"),_T("description grand child 2"))
-					<<(CScalableNode::New(2,true,RandColor(),_T("ggchild1"),_T("grand grand child 1"),_T("description grand grand child 1"))
-					+ CScalableNode::New(2,true,RandColor(),_T("ggchild2"),_T("grand grand child 2"),_T("description grand grand child 2"))
-					))
-				))
-			);
-
-
-	SetContent(pRoot,2);
+// 	CScalableNode::Ptr pRoot = 
+// 		CScalableNode::New(0,true,RandColor(),_T(""),_T(""),_T("root"))
+// 			<< (CScalableNode::New(1,true,RandColor(),_T("child1"),_T("child 1"),_T("description child 1"))
+// 			+ (CScalableNode::New(1,false,RandColor(),_T(""),_T(""),_T("child 2"))
+// 				<<(CScalableNode::New(1,true,RandColor(),_T("pGchild1"),_T("grand child 1"),_T("description grand child 1"))
+// 				+ (CScalableNode::New(1,true,RandColor(),_T("pGchild2"),_T("grand child 2"),_T("description grand child 2"))
+// 					<<(CScalableNode::New(2,true,RandColor(),_T("ggchild1"),_T("grand grand child 1"),_T("description grand grand child 1"))
+// 					+ CScalableNode::New(2,true,RandColor(),_T("ggchild2"),_T("grand grand child 2"),_T("description grand grand child 2"))
+// 					))
+// 				))
+// 			);
+// 
+// 
+// 	SetContent(pRoot,2);
 }
 
 void CScalableLayout::SetContent( CScalableNode::Ptr pRoot,int nMaxLevel )

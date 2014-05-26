@@ -12,7 +12,7 @@ public:
 	int nMaxLevel;
 
 private:
-	CScalableNode::Ptr Build();
+	void Build();
 	COLORREF RandColor();
 private:
 	CPEFile &m_pe;

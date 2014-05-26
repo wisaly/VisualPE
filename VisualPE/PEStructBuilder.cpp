@@ -12,22 +12,29 @@ CPEStructBuilder::~CPEStructBuilder(void)
 {
 }
 
-CScalableNode::Ptr CPEStructBuilder::Build()
+void CPEStructBuilder::Build()
 {
 	CScalableNode::Ptr pRoot = CScalableNode::New(
-		0,true,RandColor(),_T(""),_T(""),_T("PE File"));
+		0,true,RandColor(),_T("PE File"));
 
 	CScalableNode::Ptr pDOSHeader = CScalableNode::New(
-		1,false,RandColor(),_T(""),_T(""),_T("DOS Header"));
+		1,false,RandColor(),_T("DOS Header"));
+	CScalableNode::Ptr pDOSStub = CScalableNode::New(
+		1,false,RandColor(),_T("DOS Stub"));
 	CScalableNode::Ptr pNTHeader = CScalableNode::New(
-		1,false,RandColor(),_T(""),_T(""),_T("NT Header"));
-
+		1,false,RandColor(),_T("NT Header"));
+	CScalableNode::Ptr pSectionTable = CScalableNode::New(
+		1,false,RandColor(),_T("Section Table"));
 	CScalableNode::Ptr pSections = CScalableNode::New(
-		1,false,RandColor(),_T(""),_T(""),_T("Sections"));
+		1,false,RandColor(),_T("Sections"));
 	
-	pRoot << (pDOSHeader + pNTHeader + pSections);
+	pRoot << (
+		(CScalableNode::New(1,false,RandColor())
+			<< (pDOSHeader + pDOSStub))
+		+ pNTHeader + pSectionTable + pSections);
 
-	return pRoot;
+	pResult = pRoot;
+	nMaxLevel = 1;
 }
 
 COLORREF CPEStructBuilder::RandColor()

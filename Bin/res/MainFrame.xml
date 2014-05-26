@@ -42,7 +42,7 @@
         <VerticalLayout>
           <Label name="filepath" valign="center" textcolor="FFAAAAAA"/>
         </VerticalLayout>
-        <Button width="90" name="testbtn" text="TEST"
+        <Button visible="false" width="90" name="testbtn" text="TEST"
                 normalimage="file='button.png'"
                 hotimage="file='buttonhot.png'"
                 pushedimage="file='buttonpushed.png'"/>

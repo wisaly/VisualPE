@@ -17,14 +17,16 @@ public:
 	CDuiString sText;
 	CDuiString sDescription;
 	COLORREF crBk;
+	DWORD dwSize;
 
 	static Ptr New(
 		int nLevel = 0,
-		bool bHor = true,
-		COLORREF crBk = 0,
-		CDuiString sName = _T(""),
-		CDuiString sText = _T(""),
-		CDuiString sDescription = _T(""));
+		bool bHor = true, 
+		COLORREF crBk = 0, 
+		CDuiString sDescription = _T(""), 
+		DWORD dwSize = 0, 
+		CDuiString sName = _T(""), 
+		CDuiString sText = _T(""));
 	void AppendChild(Ptr pNode);
 
 	Ptr GetParent();
@@ -32,6 +34,8 @@ public:
 	Iter ChildEnd();
 
 	Ptr FindChild(CDuiString sName);
+
+	CDuiString SizeString();
 
 private:
 	List m_vChildren;
