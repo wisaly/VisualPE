@@ -32,11 +32,11 @@ CScalableLayout::~CScalableLayout(void)
 
 CContainerUI * CScalableLayout::CreateLayout( CScalableNode::Ptr pNode,int nLevel )
 {
-	CContainerUI *pLayout = pNode->bHor ?
+	CContainerUI *pLayout = pNode->IsHor ?
 		static_cast<CContainerUI*>(new CHorizontalLayoutUI) : 
 		static_cast<CContainerUI*>(new CVerticalLayoutUI);
 
-	pLayout->SetBkColor(COLOR(pNode->crBk));
+	pLayout->SetBkColor(COLOR(pNode->BkColor));
 
 	for (CScalableNode::Iter i = pNode->ChildBegin();
 		i != pNode->ChildEnd();
@@ -47,7 +47,7 @@ CContainerUI * CScalableLayout::CreateLayout( CScalableNode::Ptr pNode,int nLeve
 			j != (*i)->ChildEnd();
 			j++)
 		{
-			if ((*j)->nLevel == nLevel)
+			if ((*j)->Level == nLevel)
 			{
 				bLeaf = false;
 				break;
@@ -57,14 +57,14 @@ CContainerUI * CScalableLayout::CreateLayout( CScalableNode::Ptr pNode,int nLeve
 		{
 			CContainerUI *pItemContainer = new CContainerUI;
 			CButtonUI *pItem = new CButtonUI;
-			pItem->SetName((*i)->sName);
-			pItem->SetBkColor(COLOR((*i)->crBk));
+			pItem->SetName((*i)->Name);
+			pItem->SetBkColor(COLOR((*i)->BkColor));
 			pItem->SetShowHtml();
 			pItem->SetTextStyle(DT_CENTER|DT_VCENTER);
 			
 			CDuiString sText;
 			sText.Format(_T("{p}%s{n}{n}{c #FFCCCCCC}%s{/c}{/p}")
-				,(LPCTSTR)(*i)->sText,(LPCTSTR)(*i)->sDescription);
+				,(LPCTSTR)(*i)->Text,(LPCTSTR)(*i)->Description);
 			pItem->SetText(sText);
 			
 			pItemContainer->Add(pItem);
@@ -78,7 +78,7 @@ CContainerUI * CScalableLayout::CreateLayout( CScalableNode::Ptr pNode,int nLeve
 	}
 
 
-	if (!pNode->sDescription.IsEmpty())
+	if (!pNode->Description.IsEmpty())
 	{
 		CVerticalLayoutUI *pWrapper = new CVerticalLayoutUI;
 		pWrapper->Add(pLayout);
@@ -88,13 +88,9 @@ CContainerUI * CScalableLayout::CreateLayout( CScalableNode::Ptr pNode,int nLeve
 		CLabelUI *pDescription = new CLabelUI;
 		pDescription->SetFixedHeight(20);
 		pDescription->SetTextStyle(DT_CENTER);
-		pDescription->SetBkColor(COLOR(pNode->crBk));
+		pDescription->SetBkColor(COLOR(pNode->BkColor));
 
-		CDuiString sDescription;
-		sDescription.Format(_T("%s (%s)"),
-			(LPCTSTR)pNode->sDescription,
-			(LPCTSTR)pNode->SizeString());
-		pDescription->SetText(sDescription);
+		pDescription->SetText(pNode->Description);
 		pWrapper->Add(pDescription);
 
 		return pWrapper;
@@ -118,17 +114,17 @@ void CScalableLayout::ZoomIn( CDuiString sNodeName )
 
 	m_pCurrentNode = pNode;
 	m_pContainer->RemoveAll();
-	m_pContainer->Add(CreateLayout(pNode,pNode->nLevel + 1));
+	m_pContainer->Add(CreateLayout(pNode,pNode->Level + 1));
 
-	m_pStatusBar->SetVisible(pNode->nLevel > 0);
-	m_pProgress->SetValue(m_nMaxLevel - pNode->nLevel + 1);
+	m_pStatusBar->SetVisible(pNode->Level > 0);
+	m_pProgress->SetValue(m_nMaxLevel - pNode->Level + 1);
 }
 
 void CScalableLayout::ZoomOut()
 {
 	if (m_pCurrentNode && m_pCurrentNode->GetParent())
 	{
-		ZoomIn(m_pCurrentNode->GetParent()->sName);
+		ZoomIn(m_pCurrentNode->GetParent()->Name);
 	}
 }
 
@@ -161,7 +157,7 @@ void CScalableLayout::SetContent( CScalableNode::Ptr pRoot,int nMaxLevel )
 	m_pProgress->SetMinValue(0);
 	m_pProgress->SetMaxValue(m_nMaxLevel + 1);
 
-	ZoomIn(m_pRootNode->sName);
+	ZoomIn(m_pRootNode->Name);
 }
 
 void CScalableLayout::Notify( TNotifyUI& msg )

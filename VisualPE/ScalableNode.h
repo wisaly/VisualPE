@@ -11,13 +11,12 @@ public:
 	typedef boost::shared_ptr<List> ListPtr;
 	typedef vector<Ptr>::iterator Iter;
 
-	int nLevel;
-	bool bHor;
-	CDuiString sName;
-	CDuiString sText;
-	CDuiString sDescription;
-	COLORREF crBk;
-	DWORD dwSize;
+	int Level;
+	bool IsHor;
+	CDuiString Name;
+	CDuiString Text;
+	CDuiString Description;
+	COLORREF BkColor;
 
 	static Ptr New(
 		int nLevel = 0,
@@ -35,7 +34,7 @@ public:
 
 	Ptr FindChild(CDuiString sName);
 
-	CDuiString SizeString();
+	CDuiString SizeString(DWORD dwSize);
 
 private:
 	List m_vChildren;

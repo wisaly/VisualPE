@@ -13,6 +13,15 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="Utils">
+      <UniqueIdentifier>{100ef670-0830-4246-8928-82a05aee7018}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="PEFile">
+      <UniqueIdentifier>{3a8611fb-8434-4d46-ad2f-9fd34cc29a51}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="UI">
+      <UniqueIdentifier>{f268781a-5766-4c3f-92b9-aadd0c29ec7b}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <None Include="ReadMe.txt" />
@@ -41,23 +50,23 @@
     <ClInclude Include="MainWnd.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="ScalableLayout.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="OpenFileDialog.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="ScalableNode.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="PEFile.h">
-      <Filter>头文件</Filter>
+    <ClInclude Include="SizedPointer.h">
+      <Filter>Utils</Filter>
     </ClInclude>
     <ClInclude Include="PEStructBuilder.h">
-      <Filter>头文件</Filter>
+      <Filter>PEFile</Filter>
     </ClInclude>
-    <ClInclude Include="SizedPointer.h">
-      <Filter>头文件</Filter>
+    <ClInclude Include="PEFile.h">
+      <Filter>PEFile</Filter>
+    </ClInclude>
+    <ClInclude Include="ScalableNode.h">
+      <Filter>UI</Filter>
+    </ClInclude>
+    <ClInclude Include="ScalableLayout.h">
+      <Filter>UI</Filter>
+    </ClInclude>
+    <ClInclude Include="OpenFileDialog.h">
+      <Filter>UI</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -70,23 +79,23 @@
     <ClCompile Include="MainWnd.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="ScalableLayout.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="OpenFileDialog.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="ScalableNode.cpp">
-      <Filter>源文件</Filter>
+    <ClCompile Include="SizedPointer.cpp">
+      <Filter>Utils</Filter>
     </ClCompile>
     <ClCompile Include="PEFile.cpp">
-      <Filter>源文件</Filter>
+      <Filter>PEFile</Filter>
     </ClCompile>
     <ClCompile Include="PEStructBuilder.cpp">
-      <Filter>源文件</Filter>
+      <Filter>PEFile</Filter>
     </ClCompile>
-    <ClCompile Include="SizedPointer.cpp">
-      <Filter>源文件</Filter>
+    <ClCompile Include="OpenFileDialog.cpp">
+      <Filter>UI</Filter>
+    </ClCompile>
+    <ClCompile Include="ScalableLayout.cpp">
+      <Filter>UI</Filter>
+    </ClCompile>
+    <ClCompile Include="ScalableNode.cpp">
+      <Filter>UI</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

@@ -15,13 +15,13 @@ CScalableNode::Ptr CScalableNode::New( int nLevel /*= 0*/, bool bHor /*= true*/,
 {
 	Ptr pNew = Ptr(new CScalableNode);
 	pNew->m_pThis = pNew;
-	pNew->nLevel = nLevel;
-	pNew->bHor = bHor;
-	pNew->crBk = crBk;
-	pNew->sName = sName;
-	pNew->sText = sText;
-	pNew->sDescription = sDescription;
-	pNew->dwSize = dwSize;
+	pNew->Level = nLevel;
+	pNew->IsHor = bHor;
+	pNew->BkColor = crBk;
+	pNew->Name = sName;
+	pNew->Text = sText;
+	pNew->Description = sDescription;
+	//pNew->dwSize = dwSize;
 
 	return pNew;
 }
@@ -48,7 +48,7 @@ CScalableNode::Iter CScalableNode::ChildEnd()
 
 CScalableNode::Ptr CScalableNode::FindChild( CDuiString sName )
 {
-	if (this->sName == sName)
+	if (this->Name == sName)
 	{
 		return m_pThis;
 	}
@@ -67,7 +67,7 @@ CScalableNode::Ptr CScalableNode::FindChild( CDuiString sName )
 	return Ptr();
 }
 
-CDuiString CScalableNode::SizeString()
+CDuiString CScalableNode::SizeString(DWORD dwSize)
 {
 	CDuiString sResult;
 	if (dwSize > (2 << 20))
