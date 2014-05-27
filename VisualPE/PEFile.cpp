@@ -40,7 +40,7 @@ bool CPEFile::LoadFile( CDuiString sFilePath )
 	}
 
 	FileBuf.Allocate(dwFileSize);
-	if (FileBuf)
+	if (!FileBuf)
 	{
 		return false;
 	}

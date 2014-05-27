@@ -67,24 +67,6 @@ CScalableNode::Ptr CScalableNode::FindChild( CDuiString sName )
 	return Ptr();
 }
 
-CDuiString CScalableNode::SizeString(DWORD dwSize)
-{
-	CDuiString sResult;
-	if (dwSize > (2 << 20))
-	{
-		sResult.Format(_T("%d MB"),dwSize);
-	}
-	else if (dwSize > (2 << 10))
-	{
-		sResult.Format(_T("%d KB"),dwSize);
-	}
-	else
-	{
-		sResult.Format(_T("%d bytes"),dwSize);
-	}
-
-	return sResult;
-}
 CScalableNode::ListPtr operator+( CScalableNode::Ptr pLeft,CScalableNode::Ptr pRight )
 {
 	CScalableNode::ListPtr pList(new CScalableNode::List);

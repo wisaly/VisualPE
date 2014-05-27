@@ -19,11 +19,18 @@ template<class T>
 class HeapManage
 {
 public:
+	HeapManage()
+		:m_pManaged(0)
+	{
+
+	}
 	T* Allocate()
 	{
 		Release();
 		m_pManaged = new T;
 		::ZeroMemory(m_pManaged,sizeof(T));
+		T *&pObj = Ref();
+		pObj = m_pManaged;
 		return m_pManaged;
 	}
 	~HeapManage()
@@ -41,17 +48,26 @@ protected:
 			delete m_pManaged;
 		}
 	}
+	virtual T *&Ref() = 0;
 };
 
 template<class T>
 class HeapArrayManage
 {
 public:
+	HeapArrayManage()
+		:m_pManaged(0)
+	{
+
+	}
 	T* Allocate(int nCount)
 	{
 		Release();
 		m_pManaged = new T[nCount];
 		::ZeroMemory(m_pManaged,sizeof(T)*nCount);
+
+		T *&pObj = Ref();
+		pObj = m_pManaged;
 		return m_pManaged;
 	}
 	virtual ~HeapArrayManage()
@@ -66,6 +82,7 @@ protected:
 			delete m_pManaged;
 		}
 	}
+	virtual T *&Ref() = 0;
 	T* m_pManaged;
 };
 
@@ -144,12 +161,20 @@ public:
 		return m_nSize;
 	}
 
-private:
-	// support boolean convert
-	typedef Type * CSizedPointer::*unspecified_bool_type;
-	operator unspecified_bool_type() const
+// private:
+// 	// support boolean convert
+// 	typedef Type * CSizedPointer::*unspecified_bool_type;
+// public:
+// 	operator unspecified_bool_type() const
+// 	{
+// 		return m_pObj == 0? 0: &CSizedPointer::m_pObj;
+// 	}
+
+protected:
+	// 
+	Type *&Ref()
 	{
-		return m_pObj == 0? 0: &CSizedPointer::m_pObj;
+		return m_pObj;
 	}
 private:
 	int m_nSize;

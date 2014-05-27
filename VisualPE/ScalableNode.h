@@ -34,8 +34,6 @@ public:
 
 	Ptr FindChild(CDuiString sName);
 
-	CDuiString SizeString(DWORD dwSize);
-
 private:
 	List m_vChildren;
 	Ptr m_pThis;
