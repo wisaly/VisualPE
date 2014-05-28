@@ -1,8 +1,6 @@
 #include "StdAfx.h"
 #include "ScalableLayout.h"
 
-#define COLOR(cr) (cr | 0xFF000000)
-
 CScalableLayout::CScalableLayout(HWND hParentWnd)
 	:m_pContainer(0),m_pProgress(0),m_pStatusBar(0),
 	m_hParentWnd(hParentWnd)
@@ -36,7 +34,7 @@ CContainerUI * CScalableLayout::CreateLayout( CScalableNode::Ptr pNode,int nLeve
 		static_cast<CContainerUI*>(new CHorizontalLayoutUI) : 
 		static_cast<CContainerUI*>(new CVerticalLayoutUI);
 
-	pLayout->SetBkColor(COLOR(pNode->BkColor));
+	pLayout->SetBkColor(pNode->BkColor);
 
 	for (CScalableNode::Iter i = pNode->ChildBegin();
 		i != pNode->ChildEnd();
@@ -58,13 +56,21 @@ CContainerUI * CScalableLayout::CreateLayout( CScalableNode::Ptr pNode,int nLeve
 			CContainerUI *pItemContainer = new CContainerUI;
 			CButtonUI *pItem = new CButtonUI;
 			pItem->SetName((*i)->Name);
-			pItem->SetBkColor(COLOR((*i)->BkColor));
+			pItem->SetBkColor((*i)->BkColor);
 			pItem->SetShowHtml();
 			pItem->SetTextStyle(DT_CENTER|DT_VCENTER);
 			
 			CDuiString sText;
-			sText.Format(_T("{p}%s{n}{n}{c #FFCCCCCC}%s{/c}{/p}")
-				,(LPCTSTR)(*i)->Text,(LPCTSTR)(*i)->Description);
+			if ((*i)->Text.IsEmpty())
+			{
+				sText.Format(_T("{p}{c #FFCCCCCC}%s{/c}{/p}"),
+					(LPCTSTR)(*i)->Description);
+			}
+			else
+			{
+				sText.Format(_T("{p}%s{n}{n}{c #FFCCCCCC}%s{/c}{/p}"),
+					(LPCTSTR)(*i)->Text,(LPCTSTR)(*i)->Description);
+			}
 			pItem->SetText(sText);
 			
 			pItemContainer->Add(pItem);
@@ -88,7 +94,7 @@ CContainerUI * CScalableLayout::CreateLayout( CScalableNode::Ptr pNode,int nLeve
 		CLabelUI *pDescription = new CLabelUI;
 		pDescription->SetFixedHeight(20);
 		pDescription->SetTextStyle(DT_CENTER);
-		pDescription->SetBkColor(COLOR(pNode->BkColor));
+		pDescription->SetBkColor(pNode->BkColor);
 
 		pDescription->SetText(pNode->Description);
 		pWrapper->Add(pDescription);
@@ -107,6 +113,11 @@ void CScalableLayout::ZoomIn( CDuiString sNodeName )
 	}
 	CScalableNode::Ptr pNode = m_pRootNode->FindChild(sNodeName);
 
+	ZoomIn(pNode);
+}
+
+void CScalableLayout::ZoomIn( CScalableNode::Ptr pNode )
+{
 	if (!pNode)
 	{
 		return;
@@ -122,9 +133,20 @@ void CScalableLayout::ZoomIn( CDuiString sNodeName )
 
 void CScalableLayout::ZoomOut()
 {
-	if (m_pCurrentNode && m_pCurrentNode->GetParent())
+	if (m_pCurrentNode)
 	{
-		ZoomIn(m_pCurrentNode->GetParent()->Name);
+		CScalableNode::Ptr pCurrentNode = m_pCurrentNode;
+		int nCurrentLevel = pCurrentNode->Level;
+		while (pCurrentNode)
+		{
+			if (pCurrentNode->GetParent() && 
+				pCurrentNode->GetParent()->Level < nCurrentLevel)
+			{
+				ZoomIn(pCurrentNode->GetParent());
+				break;
+			}
+			pCurrentNode = pCurrentNode->GetParent();
+		}
 	}
 }
 
@@ -157,7 +179,7 @@ void CScalableLayout::SetContent( CScalableNode::Ptr pRoot,int nMaxLevel )
 	m_pProgress->SetMinValue(0);
 	m_pProgress->SetMaxValue(m_nMaxLevel + 1);
 
-	ZoomIn(m_pRootNode->Name);
+	ZoomIn(m_pRootNode);
 }
 
 void CScalableLayout::Notify( TNotifyUI& msg )

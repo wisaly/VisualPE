@@ -69,6 +69,8 @@ bool CPEFile::LoadFile( CDuiString sFilePath )
 	NtHeader = (PIMAGE_NT_HEADERS)(FileBuf + (DWORD)DosHeader->e_lfanew);
 
 	// check valid
+	DWORD d1 = (DWORD)DosHeader->e_magic;
+	DWORD d2 = (DWORD)NtHeader->Signature;
 	if(IMAGE_DOS_SIGNATURE != (DWORD)DosHeader->e_magic
 		|| IMAGE_NT_SIGNATURE != (DWORD)NtHeader->Signature)
 	{
@@ -83,7 +85,10 @@ bool CPEFile::LoadFile( CDuiString sFilePath )
 	DWORD dwSectionOffset = DosHeader->e_lfanew + sizeof(IMAGE_NT_HEADERS);
 	for (int i = 0;i < NtHeader->FileHeader.NumberOfSections;i ++)
 	{
-		SectionHeaders.push_back((PIMAGE_SECTION_HEADER)(FileBuf + dwSectionOffset));
+		SectionHeaders.push_back((PIMAGE_SECTION_HEADER)(
+			FileBuf + dwSectionOffset));
+
+		dwSectionOffset += sizeof(IMAGE_SECTION_HEADER);
 	}
 
 	GetExportTable();
@@ -104,15 +109,21 @@ void CPEFile::GetExportTable()
 	{
 		return;
 	}
+
+	DWORD dwOffset = NtHeader->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_EXPORT].VirtualAddress;
+	if (dwOffset == 0)
+	{
+		return;
+	}
 	PIMAGE_EXPORT_DIRECTORY pIED = (PIMAGE_EXPORT_DIRECTORY)(FileBuf + 
-		NtHeader->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_EXPORT].VirtualAddress);
+		dwOffset);
 
 	ExportFile exportFile;
 	if ( pIED->Name )
 	{
 		// file name
 		exportFile.FileName = MultiByte2String(
-			(LPCSTR)(FileBuf + RVA2FileOffset(pIED->Name)));
+			(LPCSTR)(FileBuf + RVA2FOA(pIED->Name)));
 	}
 
 	exportFile.NamedFunCount = pIED->NumberOfNames;
@@ -120,7 +131,7 @@ void CPEFile::GetExportTable()
 	for (UINT i=0;i < pIED->NumberOfFunctions;i ++)
 	{
 		WORD wOrdinals = 0;
-		DWORD dwOffsetFun = RVA2FileOffset(pIED->AddressOfFunctions);
+		DWORD dwOffsetFun = RVA2FOA(pIED->AddressOfFunctions);
 		DWORD dwFunRVA = *((DWORD *)(FileBuf + dwOffsetFun + (i << 2)));
 		if ( dwFunRVA != 0 )
 		{
@@ -129,12 +140,12 @@ void CPEFile::GetExportTable()
 			for ( UINT j=0 ; j < pIED->NumberOfNames; j++)
 			{
 				// is function have name
-				DWORD dwNameOffset = RVA2FileOffset(
+				DWORD dwNameOffset = RVA2FOA(
 					pIED->AddressOfNames + (j << 2));
 				dwNameOffset = 
-					RVA2FileOffset(*((DWORD *)(FileBuf + dwNameOffset)));
+					RVA2FOA(*((DWORD *)(FileBuf + dwNameOffset)));
 
-				DWORD dwOffsetOrdinal = RVA2FileOffset(
+				DWORD dwOffsetOrdinal = RVA2FOA(
 					pIED->AddressOfNameOrdinals + (j << 1));
 				wOrdinals = *((WORD *)(FileBuf + dwOffsetOrdinal));
 
@@ -146,8 +157,8 @@ void CPEFile::GetExportTable()
 				}						
 			}
 
-			exportFun.Index = Number2String (i + pIED->Base);
-			exportFun.RVA = Number2String(dwFunRVA);
+			exportFun.Index = i + pIED->Base;
+			exportFun.RVA = dwFunRVA;
 			exportFile.Functions.push_back(exportFun);
 		}
 	}
@@ -161,8 +172,12 @@ void CPEFile::GetImportTable()
 		return;
 	}
 	// is not empty
-	DWORD dwFileOffset = RVA2FileOffset(
+	DWORD dwFileOffset = RVA2FOA(
 		NtHeader->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_IMPORT].VirtualAddress);
+	if (dwFileOffset == 0)
+	{
+		return ;
+	}
 
 	for(;;)
 	{
@@ -178,74 +193,52 @@ void CPEFile::GetImportTable()
 		}
 
 		ImportFile importFile;
-		DWORD dwFunOffset = 0;
 
 		importFile.FileName = MultiByte2String(
-			(LPCSTR)(FileBuf + RVA2FileOffset(pIID->Name)));
+			(LPCSTR)(FileBuf + RVA2FOA(pIID->Name)));
 		// get functions
-		if( pIID->OriginalFirstThunk == 0 )
+		DWORD dwThunkOffset = pIID->OriginalFirstThunk != 0 ?
+			RVA2FOA(pIID->OriginalFirstThunk) : 
+			RVA2FOA(pIID->FirstThunk);
+
+		for(;;)
 		{
-			// FirstThunk
-			DWORD dwThunkOffset = RVA2FileOffset( pIID->FirstThunk );
-			for(;;)
+			PIMAGE_THUNK_DATA pITD = (PIMAGE_THUNK_DATA)(FileBuf + dwThunkOffset);
+
+			if (pITD->u1.Function == NULL)
 			{
-				PIMAGE_THUNK_DATA pITD = (PIMAGE_THUNK_DATA)(FileBuf + dwThunkOffset);
+				// end of this file
+				break;
+			}
 
-				if ( pITD->u1.Function == NULL )
-				{
-					// end of this file
-					break;
-				}
+			ImportFile::Function func;
 
-				dwFunOffset = RVA2FileOffset( pITD->u1.Function );
-				importFile.Functions.push_back(MultiByte2String(
+			DWORD dwMask = m_bIs64 ? 
+				(DWORD)((pITD->u1.Function & IMAGE_ORDINAL_FLAG64) >> 63) : 
+			(DWORD)((pITD->u1.Function & IMAGE_ORDINAL_FLAG32) >> 31);
+
+			if (dwMask == 1)
+			{
+				// import by id
+				DWORD dwID;
+				dwID = m_bIs64 ?
+					(DWORD)(pITD->u1.Function & (~IMAGE_ORDINAL_FLAG64)) :
+				(DWORD)(pITD->u1.Function & (~IMAGE_ORDINAL_FLAG32));
+
+				func.Id = dwID;
+			}
+			else
+			{
+				// import by name
+				DWORD dwFunOffset = RVA2FOA(pITD->u1.Function);
+
+				func.Name = MultiByte2String(
 					(LPCSTR)(((PIMAGE_IMPORT_BY_NAME)
-					(FileBuf + dwFunOffset))->Name)) );
-
-				dwThunkOffset += sizeof(IMAGE_THUNK_DATA);
+					(FileBuf + dwFunOffset))->Name));
 			}
-		}
-		else
-		{
-			// OriginalFirstThunk
-			DWORD dwThunkOffset = RVA2FileOffset( pIID->OriginalFirstThunk );
-			for(;;)
-			{
-				PIMAGE_THUNK_DATA pITD = (PIMAGE_THUNK_DATA)(FileBuf + dwThunkOffset);
+			importFile.Functions.push_back(func);
 
-				if (pITD->u1.Function == NULL)
-				{
-					// end of this file
-					break;
-				}
-				DWORD dwMask = m_bIs64 ? 
-					(DWORD)((pITD->u1.Function & IMAGE_ORDINAL_FLAG64) >> 63) : 
-				(DWORD)((pITD->u1.Function & IMAGE_ORDINAL_FLAG32) >> 31);
-
-				if (dwMask == 1)
-				{
-					// import by id
-					DWORD dwID;
-					dwID = m_bIs64 ?
-						(DWORD)(pITD->u1.Function & (~IMAGE_ORDINAL_FLAG64)) :
-					(DWORD)(pITD->u1.Function & (~IMAGE_ORDINAL_FLAG32));
-
-					importFile.Functions.push_back(
-						CDuiString(_T("FunID: ")) + Number2String(dwID));
-				}
-				else
-				{
-					// import by name
-					dwFunOffset = RVA2FileOffset( pITD->u1.Function );
-					importFile.Functions.push_back(
-						MultiByte2String(
-						(LPCSTR)(((PIMAGE_IMPORT_BY_NAME)
-						(FileBuf + dwFunOffset))->Name)));
-				}
-
-				dwThunkOffset += sizeof(IMAGE_THUNK_DATA);
-			}
-
+			dwThunkOffset += sizeof(IMAGE_THUNK_DATA);
 		}
 
 		ImportTable.push_back(importFile);
@@ -253,7 +246,7 @@ void CPEFile::GetImportTable()
 	}
 }
 
-DWORD CPEFile::RVA2FileOffset( DWORD dwRVA ) const
+DWORD CPEFile::RVA2FOA( DWORD dwRVA ) const
 {
 	for (auto i = SectionHeaders.begin();
 		i != SectionHeaders.end();
@@ -281,8 +274,13 @@ void CPEFile::GetRelocationTable()
 		return;
 	}
 
-	DWORD dwOffset = RVA2FileOffset(
+	DWORD dwOffset = RVA2FOA(
 		NtHeader->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_BASERELOC].VirtualAddress);
+	if (dwOffset == 0)
+	{
+		return;
+	}
+
 	PIMAGE_BASE_RELOCATION pReloc = (PIMAGE_BASE_RELOCATION)(FileBuf + dwOffset );
 
 	UINT nIndex = 1;
@@ -335,7 +333,7 @@ void CPEFile::GetRelocationTable()
 			if( wOffset != 0 )
 			{
 				chunk.RVA = pReloc->VirtualAddress+(wOffset & 0x0FFF);
-				chunk.FarAddr = *((DWORD*)(FileBuf + RVA2FileOffset(chunk.RVA)));
+				chunk.FarAddr = *((DWORD*)(FileBuf + RVA2FOA(chunk.RVA)));
 			}
 			else
 			{
@@ -365,7 +363,11 @@ void CPEFile::GetResourseTable()
 		return;
 	}
 
-	DWORD dwOffset = RVA2FileOffset(NtHeader->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_RESOURCE].VirtualAddress);
+	DWORD dwOffset = RVA2FOA(NtHeader->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_RESOURCE].VirtualAddress);
+	if (dwOffset == 0)
+	{
+		return;
+	}
 	PIMAGE_RESOURCE_DIRECTORY pResource = (PIMAGE_RESOURCE_DIRECTORY)(FileBuf + dwOffset);
 	
 	DWORD dwCount = pResource->NumberOfIdEntries + pResource->NumberOfNamedEntries;
@@ -374,64 +376,70 @@ void CPEFile::GetResourseTable()
 		ResourceRecord resRecord;
 
 		PIMAGE_RESOURCE_DIRECTORY_ENTRY pFirstEntry = 
-			(PIMAGE_RESOURCE_DIRECTORY_ENTRY)((DWORD *)pResource + 
-			sizeof(IMAGE_RESOURCE_DIRECTORY)/sizeof(DWORD)) + i;
-			
-		resRecord.Type = ResType2String(pFirstEntry->Id);
+			(PIMAGE_RESOURCE_DIRECTORY_ENTRY)
+			((BYTE *)pResource + sizeof(IMAGE_RESOURCE_DIRECTORY))
+			+ i;
+		
+		if (!pFirstEntry->NameIsString)
+		{
+			resRecord.Type = ResType2String(pFirstEntry->Id);
+		}
+
 		if (pFirstEntry->DataIsDirectory == 1)
 		{
-			PIMAGE_RESOURCE_DIRECTORY pFirstDir = (PIMAGE_RESOURCE_DIRECTORY) ( (BYTE *)pResource + pFirstEntry->OffsetToDirectory );
+			PIMAGE_RESOURCE_DIRECTORY pFirstDir = (PIMAGE_RESOURCE_DIRECTORY)((BYTE *)pResource + pFirstEntry->OffsetToDirectory);
 			DWORD dwCount = pFirstDir->NumberOfIdEntries + pFirstDir->NumberOfNamedEntries;
 			for (UINT j = 0;j < dwCount;j++)
 			{
 				// Second Directory Entries
-				ResourceRecord::Item item;
+				ResourceRecord::Entry entry;
 
 				// get resource name or id
 				PIMAGE_RESOURCE_DIRECTORY_ENTRY pSecondEntry = 
-					(PIMAGE_RESOURCE_DIRECTORY_ENTRY)((DWORD *)pFirstDir +
-					sizeof(IMAGE_RESOURCE_DIRECTORY)/sizeof(DWORD)) + j;	
+					(PIMAGE_RESOURCE_DIRECTORY_ENTRY)
+					((BYTE *)pFirstDir + sizeof(IMAGE_RESOURCE_DIRECTORY))
+					+ j;
+
 				if (pSecondEntry->NameIsString == 1)
 				{
 					// unicode resource name string, real file offset not rva
 					PIMAGE_RESOURCE_DIR_STRING_U pResDirStr = 
 						(PIMAGE_RESOURCE_DIR_STRING_U)
 						(FileBuf + dwOffset + pSecondEntry->NameOffset);
-					item.Name.Format(_T("\"%s\""),
-						(LPCTSTR)(WideChar2String(pResDirStr->NameString)));
+					entry.Name = WideChar2String(pResDirStr->NameString);
 				}
 				else
 				{
 					// resource id
-					item.Name = Number2String(pSecondEntry->Name);
+					entry.Id = pSecondEntry->Id;
 				}
-							
+
 				if( pSecondEntry->DataIsDirectory == 1 )
 				{
-					// 3rd directory
-					PIMAGE_RESOURCE_DIRECTORY pThirdEntry = 
+					// 2nd directory
+					PIMAGE_RESOURCE_DIRECTORY pSecondDir = 
 						(PIMAGE_RESOURCE_DIRECTORY)
 						(FileBuf + dwOffset + pSecondEntry->OffsetToDirectory);
-					if( pThirdEntry->NumberOfIdEntries + pThirdEntry->NumberOfNamedEntries == 1 )
+					if( pSecondDir->NumberOfIdEntries + pSecondDir->NumberOfNamedEntries == 1 )
 					{
 						// Entry exist
 						PIMAGE_RESOURCE_DIRECTORY_ENTRY pThirdEntry = 
-							(PIMAGE_RESOURCE_DIRECTORY_ENTRY)((DWORD *)pSecondEntry +
-							sizeof(IMAGE_RESOURCE_DIRECTORY) / sizeof(DWORD));	
+							(PIMAGE_RESOURCE_DIRECTORY_ENTRY)((BYTE *)pSecondDir +
+							sizeof(IMAGE_RESOURCE_DIRECTORY));	
 						if ( pThirdEntry->DataIsDirectory == 0 )
 						{
 							PIMAGE_RESOURCE_DATA_ENTRY pData = 
 								(PIMAGE_RESOURCE_DATA_ENTRY)
-								(FileBuf + dwOffset + pThirdEntry->OffsetToDirectory);
+								(FileBuf + dwOffset + pThirdEntry->OffsetToData);
 							if (pData)
 							{
-								item.RVA = pData->OffsetToData;
-								item.Size = pData->Size;
+								entry.RVA = pData->OffsetToData;
+								entry.Size = pData->Size;
 							}										
 						}
 					}
 				}
-				resRecord.Items.push_back(item);
+				resRecord.Entries.push_back(entry);
 			}
 		}
 		ResourceTable.push_back(resRecord);
@@ -489,7 +497,7 @@ CDuiString CPEFile::WideChar2String( LPCWSTR pSource ) const
 CDuiString CPEFile::Number2String( DWORD dwNumber ) const
 {
 	CDuiString sResult;
-	sResult.Format(_T("0x%Xd"),dwNumber);
+	sResult.Format(_T("0x%X"),dwNumber);
 
 	return sResult;
 }

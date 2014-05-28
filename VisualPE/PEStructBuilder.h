@@ -13,7 +13,7 @@ public:
 
 private:
 	void Build();
-	COLORREF RandColor();
+	DWORD RandColor();
 	CDuiString CombineSize(CDuiString sDescription,DWORD dwSize);
 	CDuiString Size2String(DWORD dwSize);
 private:

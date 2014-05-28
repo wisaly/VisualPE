@@ -1,21 +1,21 @@
 #pragma once
 
 #pragma region Policy Template
-template<class T>
+template<class Type>
 class NotManage
 {
 public:
-	T* Allocate()
+	Type* Allocate()
 	{
 		return 0;
 	}
 protected:
-	void Release(T*)
+	void Release(Type*)
 	{
 	}
 };
 
-template<class T>
+template<class Type>
 class HeapManage
 {
 public:
@@ -24,12 +24,12 @@ public:
 	{
 
 	}
-	T* Allocate()
+	Type* Allocate()
 	{
 		Release();
-		m_pManaged = new T;
-		::ZeroMemory(m_pManaged,sizeof(T));
-		T *&pObj = Ref();
+		m_pManaged = new Type;
+		::ZeroMemory(m_pManaged,sizeof(Type));
+		Type *&pObj = RefPt();
 		pObj = m_pManaged;
 		return m_pManaged;
 	}
@@ -40,7 +40,7 @@ public:
 protected:
 	// save allocated memory to avoid memory leak
 	// because CSizedPointer allow to change pointer value
-	T* m_pManaged;
+	Type* m_pManaged;
 	void Release()
 	{
 		if (m_pManaged)
@@ -48,10 +48,10 @@ protected:
 			delete m_pManaged;
 		}
 	}
-	virtual T *&Ref() = 0;
+	virtual Type *&RefPt() = 0;
 };
 
-template<class T>
+template<class Type>
 class HeapArrayManage
 {
 public:
@@ -60,15 +60,16 @@ public:
 	{
 
 	}
-	T* Allocate(int nCount)
+	void Allocate(int nCount)
 	{
 		Release();
-		m_pManaged = new T[nCount];
-		::ZeroMemory(m_pManaged,sizeof(T)*nCount);
+		m_pManaged = new Type[nCount];
+		::ZeroMemory(m_pManaged,sizeof(Type)*nCount);
 
-		T *&pObj = Ref();
+		Type *&pObj = RefPt();
 		pObj = m_pManaged;
-		return m_pManaged;
+		int &sz = RefSz();
+		sz = sizeof(Type) * nCount;
 	}
 	virtual ~HeapArrayManage()
 	{
@@ -82,8 +83,9 @@ protected:
 			delete m_pManaged;
 		}
 	}
-	virtual T *&Ref() = 0;
-	T* m_pManaged;
+	virtual Type *&RefPt() = 0;
+	virtual int &RefSz() = 0;
+	Type* m_pManaged;
 };
 
 #pragma endregion
@@ -172,9 +174,13 @@ public:
 
 protected:
 	// 
-	Type *&Ref()
+	Type *&RefPt()
 	{
 		return m_pObj;
+	}
+	int &RefSz()
+	{
+		return m_nSize;
 	}
 private:
 	int m_nSize;

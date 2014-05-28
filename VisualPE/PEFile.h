@@ -3,8 +3,14 @@
 
 struct ImportFile
 {
+	struct Function
+	{
+		CDuiString Name;
+		DWORD Id;
+		DWORD RVA;
+	};
 	CDuiString FileName;
-	vector<CDuiString> Functions;
+	vector<Function> Functions;
 };
 
 struct ExportFile
@@ -12,8 +18,8 @@ struct ExportFile
 	struct Function
 	{
 		CDuiString Name;
-		CDuiString RVA;
-		CDuiString Index;
+		DWORD RVA;
+		DWORD Index;
 	};
 
 	CDuiString FileName;
@@ -38,14 +44,15 @@ struct RelocationItem
 
 struct ResourceRecord
 {
-	struct Item
+	struct Entry
 	{
+		WORD Id;
 		CDuiString Name;
 		DWORD RVA;
 		DWORD Size;
 	};
 	CDuiString Type;
-	vector<Item> Items;
+	vector<Entry> Entries;
 };
 
 class CPEFile
@@ -67,7 +74,7 @@ public:
 
 	bool LoadFile(CDuiString sFilePath);
 
-	DWORD RVA2FileOffset(DWORD dwRVA) const;
+	DWORD RVA2FOA(DWORD dwRVA) const;
 	CDuiString MultiByte2String(LPCSTR pSource) const;
 	CDuiString WideChar2String(LPCWSTR pSource) const;
 	CDuiString Number2String(DWORD dwNumber) const;

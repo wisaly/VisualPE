@@ -16,19 +16,20 @@ public:
 	CDuiString Name;
 	CDuiString Text;
 	CDuiString Description;
-	COLORREF BkColor;
+	DWORD BkColor;
 
 	static Ptr New(
 		int nLevel = 0,
 		bool bHor = true, 
-		COLORREF crBk = 0, 
-		CDuiString sDescription = _T(""), 
-		DWORD dwSize = 0, 
+		DWORD crBk = 0, 
+		CDuiString sDescription = _T(""),
 		CDuiString sName = _T(""), 
 		CDuiString sText = _T(""));
+	
 	void AppendChild(Ptr pNode);
 
 	Ptr GetParent();
+	bool HaveChildren();
 	Iter ChildBegin();
 	Iter ChildEnd();
 
@@ -40,9 +41,17 @@ private:
 	Ptr m_pParent;
 };
 
+// A + B : combine A B
+// A << B : append B to A's children
+// ~(A+B) : move A B to a horizontal layout
+// !(A+B) : move A B to a vertical layout
+
 CScalableNode::ListPtr operator+(CScalableNode::Ptr pLeft,CScalableNode::Ptr pRight);
 CScalableNode::ListPtr operator+(CScalableNode::ListPtr pLeft,CScalableNode::Ptr pRight);
 CScalableNode::ListPtr operator+(CScalableNode::Ptr pLeft,CScalableNode::ListPtr pRight);
 CScalableNode::ListPtr operator+(CScalableNode::ListPtr pLeft,CScalableNode::ListPtr pRight);
 CScalableNode::Ptr operator <<(CScalableNode::Ptr pLeft,CScalableNode::Ptr pRight);
 CScalableNode::Ptr operator <<(CScalableNode::Ptr pLeft,CScalableNode::ListPtr pRight);
+CScalableNode::Ptr operator ~(CScalableNode::ListPtr pItems);
+CScalableNode::Ptr operator !(CScalableNode::ListPtr pItems);
+CScalableNode::Ptr GRID(CScalableNode::ListPtr pItems,int nColumn);

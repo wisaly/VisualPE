@@ -18,48 +18,64 @@ void CPEStructBuilder::Build()
 		0,true,RandColor(),CombineSize(_T("PE File"),m_pe.FileBuf.GetSize()));
 
 	CScalableNode::Ptr pDOSHeader = CScalableNode::New(
-		1,false,RandColor(),CombineSize(_T("DOS Header"),m_pe.DosHeader.GetSize()));
+		1,false,RandColor(),CombineSize(_T("DOS Header"),m_pe.DosHeader.GetSize()),_T("DOS Header"));
 	CScalableNode::Ptr pDOSStub = CScalableNode::New(
-		1,false,RandColor(),CombineSize(_T("DOS Stub"),m_pe.DosStub.GetSize()));
+		1,false,RandColor(),CombineSize(_T("DOS Stub"),m_pe.DosStub.GetSize()),_T("DOS Stub"));
 	CScalableNode::Ptr pNTHeader = CScalableNode::New(
-		1,false,RandColor(),CombineSize(_T("NT Header"),m_pe.NtHeader.GetSize()));
+		1,false,RandColor(),CombineSize(_T("NT Header"),m_pe.NtHeader.GetSize()),_T("NT Header"));
 	CScalableNode::Ptr pCoffHeader = CScalableNode::New(
-		1,false,RandColor(),_T("Coff Header"));
+		1,false,RandColor(),_T("Coff Header"),_T("Coff Header"));
 	CScalableNode::Ptr pOptionalHeader = CScalableNode::New(
-		1,false,RandColor(),_T("Optional Header"));
+		1,false,RandColor(),_T("Optional Header"),_T("Optional Header"));
 	CScalableNode::Ptr pDataDirectory = CScalableNode::New(
-		1,false,RandColor(),_T("Data Directory"));
+		1,false,RandColor(),_T("Data Directory"),_T("Data Directory"));
 	CScalableNode::Ptr pSectionTable = CScalableNode::New(
-		1,false,RandColor(),_T("Section Table"));
+		1,false,RandColor(),_T("Section Table"),_T("Section Table"));
 	CScalableNode::Ptr pSections = CScalableNode::New(
-		1,false,RandColor(),_T("Sections"));
+		1,false,RandColor(),_T("Sections"),_T("Sections"));
 	
 	pRoot << (
-		(CScalableNode::New(1,false,RandColor())
-			<< (pDOSHeader + pDOSStub))
-		+ (pNTHeader << 
-			(pCoffHeader + pOptionalHeader + pDataDirectory))
-		+ pSectionTable + pSections);
+		(CScalableNode::New(1,false,RandColor())<< (
+			pDOSHeader 
+			+ pDOSStub))
+		+ (pNTHeader << (
+			pCoffHeader 
+			+ pOptionalHeader 
+			+ pDataDirectory))
+		+ pSectionTable 
+		+ pSections)
+		<< GRID(
+		CScalableNode::New(1,true,RandColor()) + 
+		CScalableNode::New(1,true,RandColor()) + 
+		CScalableNode::New(1,true,RandColor()) + 
+		CScalableNode::New(1,true,RandColor()) + 
+		CScalableNode::New(1,true,RandColor()) + 
+		CScalableNode::New(1,true,RandColor()) + 
+		CScalableNode::New(1,true,RandColor()),2);
 
 	pResult = pRoot;
 	nMaxLevel = 1;
 }
 
-COLORREF CPEStructBuilder::RandColor()
+DWORD CPEStructBuilder::RandColor()
 {
-	return RGB(rand(),rand(),rand());
+	return 0xFF000000 | RGB(rand(),rand(),rand());
 }
+#define MEGA (2 << 19)
+#define KILO (2 << 9)
 
 CDuiString CPEStructBuilder::Size2String(DWORD dwSize)
 {
 	CDuiString sResult;
-	if (dwSize > (2 << 20))
+	if (dwSize > MEGA)
 	{
-		sResult.Format(_T("%d MB"),dwSize);
+		sResult.Format(_T("%d MB"),
+			dwSize / MEGA);
 	}
-	else if (dwSize > (2 << 10))
+	else if (dwSize > KILO)
 	{
-		sResult.Format(_T("%d KB"),dwSize);
+		sResult.Format(_T("%d KB"),
+			dwSize / KILO);
 	}
 	else
 	{

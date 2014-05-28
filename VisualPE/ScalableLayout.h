@@ -11,6 +11,7 @@ public:
 	
 	void SetContent(CScalableNode::Ptr pRoot,int nMaxLevel);
 	void ZoomIn(CDuiString sNodeName = _T(""));
+	void ZoomIn(CScalableNode::Ptr pNode);
 	void ZoomOut();
 
 	void TestLayout();
