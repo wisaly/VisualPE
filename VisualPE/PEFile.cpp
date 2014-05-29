@@ -62,11 +62,13 @@ bool CPEFile::LoadFile( CDuiString sFilePath )
 	DosHeader = (PIMAGE_DOS_HEADER)FileBuf;
 
 	// DOS stub
-	DosStub.SetSize(DosHeader->e_lfanew - sizeof(IMAGE_DOS_HEADER));
 	DosStub = FileBuf + sizeof(IMAGE_DOS_HEADER);
+	DosStub.SetSize(DosHeader->e_lfanew - sizeof(IMAGE_DOS_HEADER));
 
 	// PE header
 	NtHeader = (PIMAGE_NT_HEADERS)(FileBuf + (DWORD)DosHeader->e_lfanew);
+	CoffHeader = &NtHeader->FileHeader;
+	OptionalHeader = &NtHeader->OptionalHeader;
 
 	// check valid
 	DWORD d1 = (DWORD)DosHeader->e_magic;
@@ -78,17 +80,20 @@ bool CPEFile::LoadFile( CDuiString sFilePath )
 	}
 	
 	// check 64 bit
-	m_bIs64 = NtHeader->FileHeader.Machine ==  IMAGE_FILE_MACHINE_IA64 
+	m_bIs64 = CoffHeader->Machine ==  IMAGE_FILE_MACHINE_IA64 
 		|| NtHeader->FileHeader.Machine ==  IMAGE_FILE_MACHINE_AMD64 ;
 
 	// section header
 	DWORD dwSectionOffset = DosHeader->e_lfanew + sizeof(IMAGE_NT_HEADERS);
+	SectionTotalSize = 0;
 	for (int i = 0;i < NtHeader->FileHeader.NumberOfSections;i ++)
 	{
-		SectionHeaders.push_back((PIMAGE_SECTION_HEADER)(
-			FileBuf + dwSectionOffset));
-
+		PIMAGE_SECTION_HEADER pHeader = 
+			(PIMAGE_SECTION_HEADER)(FileBuf + dwSectionOffset);
+		SectionHeaders.push_back(pHeader);
 		dwSectionOffset += sizeof(IMAGE_SECTION_HEADER);
+
+		SectionTotalSize += pHeader->SizeOfRawData;
 	}
 
 	GetExportTable();
@@ -104,13 +109,13 @@ void CPEFile::GetExportTable()
 {
 	ASSERT(NtHeader);
 
-	if (NtHeader->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_EXPORT].VirtualAddress == 0 &&
-		NtHeader->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_EXPORT].Size == 0)
+	if (OptionalHeader->DataDirectory[IMAGE_DIRECTORY_ENTRY_EXPORT].VirtualAddress == 0 &&
+		OptionalHeader->DataDirectory[IMAGE_DIRECTORY_ENTRY_EXPORT].Size == 0)
 	{
 		return;
 	}
 
-	DWORD dwOffset = NtHeader->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_EXPORT].VirtualAddress;
+	DWORD dwOffset = OptionalHeader->DataDirectory[IMAGE_DIRECTORY_ENTRY_EXPORT].VirtualAddress;
 	if (dwOffset == 0)
 	{
 		return;
@@ -166,14 +171,14 @@ void CPEFile::GetExportTable()
 
 void CPEFile::GetImportTable()
 {
-	if (NtHeader->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_IMPORT].VirtualAddress == 0 &&
-		NtHeader->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_IMPORT].Size == 0)
+	if (OptionalHeader->DataDirectory[IMAGE_DIRECTORY_ENTRY_IMPORT].VirtualAddress == 0 &&
+		OptionalHeader->DataDirectory[IMAGE_DIRECTORY_ENTRY_IMPORT].Size == 0)
 	{
 		return;
 	}
 	// is not empty
 	DWORD dwFileOffset = RVA2FOA(
-		NtHeader->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_IMPORT].VirtualAddress);
+		OptionalHeader->DataDirectory[IMAGE_DIRECTORY_ENTRY_IMPORT].VirtualAddress);
 	if (dwFileOffset == 0)
 	{
 		return ;
@@ -268,14 +273,14 @@ void CPEFile::GetRelocationTable()
 	ASSERT(NtHeader);
 
 	
-	if (NtHeader->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_BASERELOC].VirtualAddress == 0 &&
-		NtHeader->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_BASERELOC].Size == 0)
+	if (OptionalHeader->DataDirectory[IMAGE_DIRECTORY_ENTRY_BASERELOC].VirtualAddress == 0 &&
+		OptionalHeader->DataDirectory[IMAGE_DIRECTORY_ENTRY_BASERELOC].Size == 0)
 	{
 		return;
 	}
 
 	DWORD dwOffset = RVA2FOA(
-		NtHeader->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_BASERELOC].VirtualAddress);
+		OptionalHeader->DataDirectory[IMAGE_DIRECTORY_ENTRY_BASERELOC].VirtualAddress);
 	if (dwOffset == 0)
 	{
 		return;
@@ -357,13 +362,13 @@ void CPEFile::GetResourseTable()
 {
 	ASSERT(NtHeader);
 	
-	if (NtHeader->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_RESOURCE].VirtualAddress == 0 &&
-		NtHeader->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_RESOURCE].Size == 0 )
+	if (OptionalHeader->DataDirectory[IMAGE_DIRECTORY_ENTRY_RESOURCE].VirtualAddress == 0 &&
+		OptionalHeader->DataDirectory[IMAGE_DIRECTORY_ENTRY_RESOURCE].Size == 0 )
 	{
 		return;
 	}
 
-	DWORD dwOffset = RVA2FOA(NtHeader->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_RESOURCE].VirtualAddress);
+	DWORD dwOffset = RVA2FOA(OptionalHeader->DataDirectory[IMAGE_DIRECTORY_ENTRY_RESOURCE].VirtualAddress);
 	if (dwOffset == 0)
 	{
 		return;
@@ -446,7 +451,7 @@ void CPEFile::GetResourseTable()
 	}
 }
 
-CDuiString CPEFile::MultiByte2String(LPCSTR pSource) const
+CDuiString CPEFile::MultiByte2String(LPCSTR pSource,int cbSource)
 {
 	CDuiString sResult;
 	if (pSource == NULL)
@@ -456,13 +461,14 @@ CDuiString CPEFile::MultiByte2String(LPCSTR pSource) const
 
 #ifdef _UNICODE
 	DWORD dwLen;
-	dwLen = ::MultiByteToWideChar (CP_ACP, 0, pSource, -1, NULL, 0);
-	scoped_ptr<wchar_t> pBuf(new wchar_t[dwLen]);
+	dwLen = ::MultiByteToWideChar (CP_ACP, 0, pSource, cbSource, NULL, 0);
+	CSizedPointer<wchar_t,HeapArrayManage> pBuf;
+	pBuf.Allocate(dwLen + 1);
 	if ( pBuf )
 	{
-		//::ZeroMemory(pBuf, dwLen);
-		::MultiByteToWideChar (CP_ACP, 0, pSource, -1, pBuf.get(), dwLen); 
-		sResult = pBuf.get();
+		::ZeroMemory(pBuf, pBuf.GetSize());
+		::MultiByteToWideChar (CP_ACP, 0, pSource, cbSource, pBuf, dwLen); 
+		sResult = (LPCTSTR)pBuf;
 	}
 #else
 	sResult = pSource;
@@ -470,7 +476,7 @@ CDuiString CPEFile::MultiByte2String(LPCSTR pSource) const
 
 	return sResult;
 }
-CDuiString CPEFile::WideChar2String( LPCWSTR pSource ) const
+CDuiString CPEFile::WideChar2String( LPCWSTR pSource,int cbSource )
 {
 	CDuiString sResult;
 	if (pSource == NULL)
@@ -483,11 +489,12 @@ CDuiString CPEFile::WideChar2String( LPCWSTR pSource ) const
 #else
 	DWORD dwLen;
 	BOOL bFlag;
-	dwLen = WideCharToMultiByte (CP_ACP, 0, pSource, NULL, NULL, 0, "?", &bFlag);
-	scoped_ptr<char> pBuf(new char[dwLen]);
+	dwLen = WideCharToMultiByte (CP_ACP, 0, pSource, cbSource, NULL, 0, "?", &bFlag);
+	scoped_ptr<char> pBuf(new char[dwLen + 1]);
 	if (pBuf)
 	{
-		WideCharToMultiByte (CP_ACP, 0, pSource, NULL, pBuf.get(), dwLen, "?", &bFlag);
+		::ZeroMemory(pBuf.get(), dwLen);
+		WideCharToMultiByte (CP_ACP, 0, pSource, cbSource, pBuf.get(), dwLen, "?", &bFlag);
 		sResult = pBuf.get();
 	}
 #endif

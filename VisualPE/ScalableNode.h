@@ -43,8 +43,9 @@ private:
 
 // A + B : combine A B
 // A << B : append B to A's children
-// ~(A+B) : move A B to a horizontal layout
-// !(A+B) : move A B to a vertical layout
+// (A + B + ...) % 3 : make a grid of 3 columns
+// (A + B + ...) / 3 : make a grid of 3 columns, without auto fill
+// (A + B + ...) * true : make a horizontal layout
 
 CScalableNode::ListPtr operator+(CScalableNode::Ptr pLeft,CScalableNode::Ptr pRight);
 CScalableNode::ListPtr operator+(CScalableNode::ListPtr pLeft,CScalableNode::Ptr pRight);
@@ -52,6 +53,6 @@ CScalableNode::ListPtr operator+(CScalableNode::Ptr pLeft,CScalableNode::ListPtr
 CScalableNode::ListPtr operator+(CScalableNode::ListPtr pLeft,CScalableNode::ListPtr pRight);
 CScalableNode::Ptr operator <<(CScalableNode::Ptr pLeft,CScalableNode::Ptr pRight);
 CScalableNode::Ptr operator <<(CScalableNode::Ptr pLeft,CScalableNode::ListPtr pRight);
-CScalableNode::Ptr operator ~(CScalableNode::ListPtr pItems);
-CScalableNode::Ptr operator !(CScalableNode::ListPtr pItems);
-CScalableNode::Ptr GRID(CScalableNode::ListPtr pItems,int nColumn);
+CScalableNode::Ptr operator %(CScalableNode::ListPtr pItems,int nColumn);
+CScalableNode::Ptr operator /(CScalableNode::ListPtr pItems,int nColumn);
+CScalableNode::Ptr operator *(CScalableNode::ListPtr pItems,bool bHor);

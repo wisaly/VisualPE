@@ -48,6 +48,11 @@ CScalableNode::Iter CScalableNode::ChildEnd()
 
 CScalableNode::Ptr CScalableNode::FindChild( CDuiString sName )
 {
+	if (sName.IsEmpty())
+	{
+		return Ptr();
+	}
+
 	if (this->Name == sName)
 	{
 		return m_pThis;
@@ -125,43 +130,7 @@ CScalableNode::Ptr operator<<( CScalableNode::Ptr pLeft,CScalableNode::ListPtr p
 	return pLeft;
 }
 
-CScalableNode::Ptr operator ~(CScalableNode::ListPtr pItems)
-{
-	ASSERT(!pItems->empty());
-
-	int nLevel = (*pItems->begin())->Level;
-
-	CScalableNode::Ptr pHor = CScalableNode::New(nLevel,true);
-
-	for (CScalableNode::List::iterator i = pItems->begin();
-		i != pItems->end();
-		i++)
-	{
-		pHor->AppendChild(*i);
-	}
-
-	return pHor;
-}
-
-CScalableNode::Ptr operator !(CScalableNode::ListPtr pItems)
-{
-	ASSERT(!pItems->empty());
-
-	int nLevel = (*pItems->begin())->Level;
-
-	CScalableNode::Ptr pVer = CScalableNode::New(nLevel,false);
-
-	for (CScalableNode::List::iterator i = pItems->begin();
-		i != pItems->end();
-		i++)
-	{
-		pVer->AppendChild(*i);
-	}
-
-	return pVer;
-}
-
-CScalableNode::Ptr GRID( CScalableNode::ListPtr pItems,int nColumn )
+CScalableNode::Ptr operator %( CScalableNode::ListPtr pItems,int nColumn )
 {
 	ASSERT(!pItems->empty());
 
@@ -192,4 +161,49 @@ CScalableNode::Ptr GRID( CScalableNode::ListPtr pItems,int nColumn )
 	}
 
 	return pVer;
+}
+
+
+CScalableNode::Ptr operator /( CScalableNode::ListPtr pItems,int nColumn )
+{
+	ASSERT(!pItems->empty());
+
+	int nLevel = (*pItems->begin())->Level;
+
+	CScalableNode::Ptr pVer = CScalableNode::New(nLevel,false);
+	int nRow = pItems->size() % nColumn ? 
+		pItems->size() / nColumn + 1 : pItems->size() / nColumn;
+
+	auto item = pItems->begin();
+	for (int i = 0;i < nRow;i ++)
+	{
+		CScalableNode::Ptr pHor = CScalableNode::New(nLevel,true);
+		for (int j = 0;j < nColumn;j ++)
+		{
+			if (item != pItems->end())
+			{
+				pHor->AppendChild(*item);
+				item++;
+			}
+		}
+		pVer->AppendChild(pHor);
+	}
+
+	return pVer;
+}
+
+CScalableNode::Ptr operator *(CScalableNode::ListPtr pItems,bool bHor)
+{
+	ASSERT(!pItems->empty());
+
+	int nLevel = (*(pItems->begin()))->Level;
+	CScalableNode::Ptr pCon = CScalableNode::New(nLevel,bHor);
+	for (auto i = pItems->begin();
+		i != pItems->end();
+		i++)
+	{
+		pCon->AppendChild(*i);
+	}
+
+	return pCon;
 }

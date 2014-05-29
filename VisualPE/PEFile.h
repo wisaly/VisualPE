@@ -66,7 +66,10 @@ public:
 	CSizedPointer<IMAGE_DOS_HEADER> DosHeader;
 	CSizedPointer<BYTE> DosStub;
 	CSizedPointer<IMAGE_NT_HEADERS> NtHeader;
+	CSizedPointer<IMAGE_FILE_HEADER> CoffHeader;
+	CSizedPointer<IMAGE_OPTIONAL_HEADER> OptionalHeader;
 	vector<PIMAGE_SECTION_HEADER> SectionHeaders;
+	DWORD SectionTotalSize;
 	vector<ExportFile> ExportTable;
 	vector<ImportFile> ImportTable;
 	vector<ResourceRecord> ResourceTable;
@@ -75,8 +78,8 @@ public:
 	bool LoadFile(CDuiString sFilePath);
 
 	DWORD RVA2FOA(DWORD dwRVA) const;
-	CDuiString MultiByte2String(LPCSTR pSource) const;
-	CDuiString WideChar2String(LPCWSTR pSource) const;
+	static CDuiString MultiByte2String(LPCSTR pSource,int cbSource = -1);
+	static CDuiString WideChar2String(LPCWSTR pSource,int cbSource = -1);
 	CDuiString Number2String(DWORD dwNumber) const;
 	CDuiString ResType2String(DWORD dwType) const;
 
