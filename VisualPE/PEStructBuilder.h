@@ -13,6 +13,7 @@ public:
 
 private:
 	void Build();
+	static DWORD AHSB(BYTE a,WORD h,BYTE s,BYTE b);
 	DWORD RandColor();
 	CDuiString CombineSize(CDuiString sDescription,DWORD dwSize);
 	CDuiString Size2String(DWORD dwSize);
@@ -22,6 +23,6 @@ private:
 private:
 	CPEFile &m_pe;
 	DWORD m_dwUniqueID;
-	//variate_generator <mt19937&,uniform_int<>>m_rand;
+	variate_generator <mt19937,uniform_int<>>m_rand;
 };
 

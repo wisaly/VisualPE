@@ -57,6 +57,7 @@ CContainerUI * CScalableLayout::CreateLayout( CScalableNode::Ptr pNode,int nLeve
 			CButtonUI *pItem = new CButtonUI;
 			pItem->SetName((*i)->Name);
 			pItem->SetBkColor((*i)->BkColor);
+
 			pItem->SetShowHtml();
 			pItem->SetTextStyle(DT_CENTER|DT_VCENTER);
 			
@@ -68,7 +69,7 @@ CContainerUI * CScalableLayout::CreateLayout( CScalableNode::Ptr pNode,int nLeve
 			}
 			else
 			{
-				sText.Format(_T("{p}%s{n}{n}{c #FFCCCCCC}%s{/c}{/p}"),
+				sText.Format(_T("{p}%s{n}{c #FFCCCCCC}%s{/c}{/p}"),
 					(LPCTSTR)(*i)->Text,(LPCTSTR)(*i)->Description);
 			}
 			pItem->SetText(sText);

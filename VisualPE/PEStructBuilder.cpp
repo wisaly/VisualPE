@@ -3,9 +3,10 @@
 
 CPEStructBuilder::CPEStructBuilder( CPEFile &pe )
 	:m_pe(pe)
-	//,m_rand(mt19937(),uniform_int<>(0,255))
+	,m_rand(mt19937(),uniform_int<>(0,360))
 {
 	Build();
+	m_rand.engine().seed((unsigned int)(time(0)));
 }
 
 CPEStructBuilder::~CPEStructBuilder(void)
@@ -77,7 +78,7 @@ void CPEStructBuilder::Build()
 		1,false,RandColor(),CombineSize(_T("Optional Header"),m_pe.OptionalHeader.GetSize()),UniqueId());
 
 	pOptionalHeader << (((
-		NODE(2,false,RandColor(),_T("Magic"),_T(""),"'PE'")) + (
+		NODE(2,false,RandColor(),_T("Magic"),_T(""),_T("'PE'"))) + (
 		NODE(2,false,RandColor(),_T("MajorLinkerVersion"),_T(""),Num2String(m_pe.OptionalHeader->MajorLinkerVersion)) + 
 		NODE(2,false,RandColor(),_T("MinorLinkerVersion"),_T(""),Num2String(m_pe.OptionalHeader->MinorLinkerVersion))) * true) * false + 
 		NODE(2,false,RandColor(),_T("SizeOfCode"),_T(""),Num2String(m_pe.OptionalHeader->SizeOfCode)) + 
@@ -140,7 +141,7 @@ void CPEStructBuilder::Build()
 
 DWORD CPEStructBuilder::RandColor()
 {
-	return 0xFF000000 | RGB(rand(),rand(),rand());
+	return AHSB(0xFF,rand()%360,62,85);
 }
 #define MEGA (2 << 19)
 #define KILO (2 << 9)
@@ -193,4 +194,36 @@ CDuiString CPEStructBuilder::UniqueId()
 	CDuiString sResult;
 	sResult.Format(_T("ID#%d"),m_dwUniqueID++);
 	return sResult;
+}
+
+#define ARGB(a,r,g,b) (((BYTE)(r)|((WORD)((BYTE)(g))<<8))|(((DWORD)(BYTE)(b))<<16)|(((DWORD)(BYTE)(a))<<24))
+DWORD CPEStructBuilder::AHSB( BYTE A,WORD H,BYTE S,BYTE B )
+{
+	int i = (int)(H / 60);
+	double f = double(H) / 60 - i;
+
+	double v = double(B) * 2.55;
+	double s = double(S) / 100;
+
+	double p = v * (1 - s);
+	double q = v * (1 - s * f);
+	double t = v * (1 - s * (1 - f));
+
+	switch(i)
+	{
+	case 0:
+		return ARGB(A,v,t,p);
+	case 1:
+		return ARGB(A,q,v,p);
+	case 2:
+		return ARGB(A,p,v,t);
+	case 3:
+		return ARGB(A,p,q,v);
+	case 4:
+		return ARGB(A,t,p,v);
+	case 5:
+		return ARGB(A,v,p,q);
+	}
+
+	return 0;
 }
